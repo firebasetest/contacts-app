@@ -1,0 +1,11 @@
+{
+  "import_mode": "upsert", // or "insert_only"
+  "contacts": [
+    {
+      "external_id": "EXT-123",
+      "first_name": "Jane",
+      "last_name": "Doe",
+      "custom_attributes": { "insurance_policy": "POL-999" }
+    }
+  ]
+}

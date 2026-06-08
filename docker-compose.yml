@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14-alpine
+    container_name: contacts_db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-contacts_db}
+      POSTGRES_USER: ${DB_USER:-contacts_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-contacts_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - contacts-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-contacts_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: contacts_backend
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=jdbc:postgresql://db:5432/${DB_NAME:-contacts_db}
+      - DATABASE_USER=${DB_USER:-contacts_user}
+      - DATABASE_PASSWORD=${DB_PASSWORD:-contacts_password}
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-this-in-production}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - contacts-network
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: contacts_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://backend:8080/api
+    networks:
+      - contacts-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  contacts-network:
+    driver: bridge

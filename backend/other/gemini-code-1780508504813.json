@@ -1,0 +1,9 @@
+{
+  "field_name": "coverage_amount",
+  "data_type": "NUMBER",
+  "rules": {
+    "visible_if": { "field": "policy_type", "equals": "comprehensive" },
+    "required_if": { "field": "premium_status", "equals": "paid" },
+    "computed": "field_a * field_b"
+  }
+}

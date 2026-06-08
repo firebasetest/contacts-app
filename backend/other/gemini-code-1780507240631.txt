@@ -1,0 +1,13 @@
+/my-contact-app
+├── src/main/java/com/company/contact/
+│   ├── config/              # Security (OIDC/SSO), RLS/Tenant, DataSource, Webhooks
+│   ├── controller/          # REST Endpoints (Batch API, CRUD)
+│   ├── domain/              # Core Models (Contact, Company, BU)
+│   ├── repository/          # Spring Data JPA interfaces
+│   ├── service/             # Business Logic (Temporal logic, Audit, Dynamic Attributes)
+│   ├── dto/                 # Data Transfer Objects
+│   └── util/                # JSONB helpers, Date/Time utils
+├── src/main/resources/
+│   ├── db/migration/        # Flyway/Liquibase scripts (Schema versions)
+│   └── application.yml      # Security and Database configurations
+└── src/test/java/           # Unit and Integration tests (Critical for RLS/Temporal)

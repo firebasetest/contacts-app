@@ -1,0 +1,3 @@
+CREATE TRIGGER audit_contacts_trigger
+AFTER INSERT OR UPDATE OR DELETE ON contacts
+FOR EACH ROW EXECUTE FUNCTION process_audit_log();
