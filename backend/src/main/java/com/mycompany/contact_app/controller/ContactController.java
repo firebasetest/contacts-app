@@ -1,10 +1,9 @@
 package com.mycompany.contact_app.controller;
 
-import com.mycompany.contact_app.entity.Contact;
-import com.mycompany.contact_app.entity.ContactHistory; // Injected history entity
+import com.mycompany.contact_app.entity.BaseContact;
+import com.mycompany.contact_app.entity.ContactHistory;
 import com.mycompany.contact_app.service.BatchActionService;
 import com.mycompany.contact_app.service.ContactService;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,52 +17,53 @@ public class ContactController {
     private final ContactService contactService;
     private final BatchActionService batchActionService;
 
-    public ContactController(ContactService cs, BatchActionService bas) {
-        this.contactService = cs;
-        this.batchActionService = bas;
+    public ContactController(ContactService contactService, BatchActionService batchActionService) {
+        this.contactService = contactService;
+        this.batchActionService = batchActionService;
     }
 
     @GetMapping
-    public List<Contact> list(@RequestParam(required = false) String status) {
+    public List<BaseContact> list(@RequestParam(required = false) String status) {
         return status == null ? contactService.findAll() : contactService.findByStatus(status);
     }
 
     @GetMapping("/{id}")
-    public Contact get(@PathVariable UUID id) {
-        return contactService.findById(id);
+    public ResponseEntity<BaseContact> get(@PathVariable UUID id) {
+        try {
+            return ResponseEntity.ok(contactService.findById(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    @PostMapping
-    public Contact create(@RequestBody Contact contact) {
-        return contactService.save(contact);
-    }
-
-    @PutMapping("/{id}")
-    public Contact update(@PathVariable UUID id, @RequestBody Contact contact) {
-        return contactService.update(id, contact);
-    }
-
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable UUID id) {
-        contactService.delete(id);
-    }
-
-    @PostMapping("/batch-action")
-    public void executeBatch(@RequestParam String status, @RequestParam String action) {
-        batchActionService.processBatchAction(status, action);
-    }
-
-    // --- New Temporal Query Endpoint ---
     @GetMapping("/{id}/historical")
     public ResponseEntity<ContactHistory> getAsOf(
             @PathVariable UUID id,
             @RequestParam("asOf") String asOfIsoString) {
 
-        // Parse the requested historical timeline window string
         LocalDateTime targetTime = LocalDateTime.parse(asOfIsoString);
-
         return contactService.getContactHistoricalState(id, targetTime)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public BaseContact create(@RequestBody BaseContact contact) {
+        return contactService.save(contact);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<BaseContact> update(@PathVariable UUID id, @RequestBody BaseContact contact) {
+        try {
+            return ResponseEntity.ok(contactService.update(id, contact));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        contactService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

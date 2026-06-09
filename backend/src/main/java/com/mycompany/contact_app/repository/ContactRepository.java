@@ -9,11 +9,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface ContactRepository extends JpaRepository<Contact, UUID> {
+public interface ContactRepository extends JpaRepository<BaseContact, UUID> {
     // RLS in Postgres will automatically filter these by BU_ID
-    List<Contact> findByStatus(String status);
+    // Returns List<BaseContact> populated with runtime subclasses (Contact/Company)
+    List<BaseContact> findByStatus(String status);
 
-    List<Contact> findBySource(String source);
+    List<BaseContact> findBySource(String source);
 
     Optional<BaseContact> findByExternalUserId(String externalUserId);
 }

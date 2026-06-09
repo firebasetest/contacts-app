@@ -3,8 +3,8 @@ package com.mycompany.contact_app.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.type.SqlTypes;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -14,7 +14,6 @@ import java.util.UUID;
 @Getter
 @Setter
 public class ContactHistory {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID historyId;
@@ -29,6 +28,9 @@ public class ContactHistory {
     private String status;
     private String email;
     private String phoneNumber;
+    private String source;
+    private String taxId;
+    private String industry;
 
     @Column(columnDefinition = "TEXT")
     private String notes;

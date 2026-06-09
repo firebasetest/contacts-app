@@ -33,10 +33,6 @@ public abstract class BaseContact extends BaseEntity {
     @JoinColumn(name = "parent_company_id")
     private BaseContact parentCompany;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "custom_attributes", columnDefinition = "jsonb")
-    private Map<String, Object> customAttributes;
-
     @Column(name = "system_role", nullable = false)
     private String systemRole = "REGULAR";
 
@@ -44,5 +40,9 @@ public abstract class BaseContact extends BaseEntity {
     private String externalUserId;
 
     @Column(columnDefinition = "TEXT")
-    private String notes; // New dedicated text notes column
+    private String notes;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "custom_attributes", columnDefinition = "jsonb")
+    private Map<String, Object> customAttributes;
 }
