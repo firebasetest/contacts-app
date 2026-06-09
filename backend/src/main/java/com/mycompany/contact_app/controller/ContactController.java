@@ -1,10 +1,14 @@
 package com.mycompany.contact_app.controller;
 
 import com.mycompany.contact_app.entity.Contact;
+import com.mycompany.contact_app.entity.ContactHistory; // Injected history entity
 import com.mycompany.contact_app.service.BatchActionService;
 import com.mycompany.contact_app.service.ContactService;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,5 +51,19 @@ public class ContactController {
     @PostMapping("/batch-action")
     public void executeBatch(@RequestParam String status, @RequestParam String action) {
         batchActionService.processBatchAction(status, action);
+    }
+
+    // --- New Temporal Query Endpoint ---
+    @GetMapping("/{id}/historical")
+    public ResponseEntity<ContactHistory> getAsOf(
+            @PathVariable UUID id,
+            @RequestParam("asOf") String asOfIsoString) {
+
+        // Parse the requested historical timeline window string
+        LocalDateTime targetTime = LocalDateTime.parse(asOfIsoString);
+
+        return contactService.getContactHistoricalState(id, targetTime)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }

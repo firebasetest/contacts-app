@@ -1,6 +1,6 @@
 package com.mycompany.contact_app.config;
 
-import com.mycompany.contact_app.repository.BusinessUnitRepository; // New import
+import com.mycompany.contact_app.repository.BusinessUnitRepository;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,7 +18,7 @@ public class TenantContextFilter implements Filter {
     public static final ThreadLocal<String> CURRENT_TENANT = new ThreadLocal<>();
 
     private final DataSource dataSource;
-    private final BusinessUnitRepository buRepository; // Injected repository
+    private final BusinessUnitRepository buRepository;
 
     public TenantContextFilter(DataSource dataSource, BusinessUnitRepository buRepository) {
         this.dataSource = dataSource;
@@ -30,28 +30,28 @@ public class TenantContextFilter implements Filter {
             throws IOException, ServletException {
 
         HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletResponse httpResponse = (HttpServletResponse) response;
         String buIdString = httpRequest.getHeader(TENANT_HEADER);
 
-        // 1. Basic validation
+        // 1. Basic Presence Validation
         if (buIdString == null || buIdString.isEmpty()) {
-            ((HttpServletResponse) response).sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing X-BU-ID header");
+            httpResponse.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing X-BU-ID header");
             return;
         }
 
-        // 2. Business Unit Existence Check
+        // 2. Strict Business Unit Database Existence Validation
         try {
             UUID buId = UUID.fromString(buIdString);
             if (!buRepository.existsById(buId)) {
-                ((HttpServletResponse) response).sendError(HttpServletResponse.SC_FORBIDDEN,
-                        "Invalid Business Unit ID");
+                httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid or non-existent Business Unit ID");
                 return;
             }
         } catch (IllegalArgumentException e) {
-            ((HttpServletResponse) response).sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid UUID format");
+            httpResponse.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid UUID format in X-BU-ID header");
             return;
         }
 
-        // 3. Apply Tenant Context
+        // 3. Mount Tenant Context on Database Connection Session and Execution Thread
         try (Connection conn = dataSource.getConnection()) {
             try (Statement stmt = conn.createStatement()) {
                 stmt.execute("SET LOCAL app.current_tenant = '" + buIdString + "'");
@@ -61,7 +61,7 @@ public class TenantContextFilter implements Filter {
                 CURRENT_TENANT.remove();
             }
         } catch (Exception e) {
-            throw new ServletException("Could not set tenant context", e);
+            throw new ServletException("Could not apply multi-tenancy context", e);
         }
     }
 }

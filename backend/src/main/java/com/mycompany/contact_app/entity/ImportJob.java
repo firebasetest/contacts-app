@@ -12,14 +12,22 @@ import java.util.UUID;
 public class ImportJob extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "job_id")
     private UUID jobId;
 
+    @Column(name = "business_unit_id", nullable = false)
     private UUID buId;
-    private String status; // PENDING, PROCESSING, COMPLETED, FAILED
+
+    @Column(nullable = false, length = 50)
+    private String status;
+
+    @Column(name = "total_records")
     private int totalRecords;
+
+    @Column(name = "processed_records")
     private int processedRecords;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
     public void setBusinessUnitId(UUID fromString) {
