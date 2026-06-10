@@ -1,10 +1,13 @@
 package com.mycompany.contact_app.controller;
 
 import com.mycompany.contact_app.entity.BaseContact;
+import com.mycompany.contact_app.entity.Company;
 import com.mycompany.contact_app.entity.ContactHistory;
 import com.mycompany.contact_app.service.BatchActionService;
+import com.mycompany.contact_app.service.ContactManagementService;
 import com.mycompany.contact_app.service.ContactService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -16,10 +19,13 @@ import java.util.UUID;
 public class ContactController {
     private final ContactService contactService;
     private final BatchActionService batchActionService;
+    private final ContactManagementService managementService;
 
-    public ContactController(ContactService contactService, BatchActionService batchActionService) {
+    public ContactController(ContactService contactService, BatchActionService batchActionService,
+            ContactManagementService managementService) {
         this.contactService = contactService;
         this.batchActionService = batchActionService;
+        this.managementService = managementService;
     }
 
     @GetMapping
@@ -65,5 +71,34 @@ public class ContactController {
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         contactService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Delegation Execution API Endpoint
+     */
+    @PostMapping("/{id}/delegate-admin")
+    public ResponseEntity<Void> delegateAdminRole(@PathVariable UUID id) {
+        managementService.delegateAdministrativeRole(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Endpoint to create a new Company profile.
+     */
+    @PostMapping("/companies")
+    @PreAuthorize("@contactSecurity.canCreateCompany()")
+    public ResponseEntity<Company> createCompany(@RequestBody Company company) {
+        Company savedCompany = (Company) contactService.save(company);
+        return ResponseEntity.ok(savedCompany);
+    }
+
+    /**
+     * Endpoint to update an existing Company profile.
+     */
+    @PutMapping("/companies/{id}")
+    @PreAuthorize("@contactSecurity.canManageContact(#id)")
+    public ResponseEntity<Company> updateCompany(@PathVariable UUID id, @RequestBody Company company) {
+        Company updatedCompany = (Company) contactService.update(id, company);
+        return ResponseEntity.ok(updatedCompany);
     }
 }

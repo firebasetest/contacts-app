@@ -2,8 +2,8 @@ package com.mycompany.contact_app.service;
 
 import com.mycompany.contact_app.config.TenantContextFilter;
 import com.mycompany.contact_app.entity.BaseContact;
-import com.mycompany.contact_app.entity.Contact;
 import com.mycompany.contact_app.entity.Company;
+import com.mycompany.contact_app.entity.Contact;
 import com.mycompany.contact_app.entity.ContactHistory;
 import com.mycompany.contact_app.repository.ContactHistoryRepository;
 import com.mycompany.contact_app.repository.ContactRepository;
@@ -15,12 +15,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Service class for managing contact-related operations.
- */
 @Service
 @Transactional
 public class ContactService {
+
     private final ContactRepository repository;
     private final ContactHistoryRepository historyRepository;
 
@@ -29,40 +27,62 @@ public class ContactService {
         this.historyRepository = historyRepository;
     }
 
-    public List<BaseContact> java() {
-        return repository.findAll();
-    }
-
-    public BaseContact findById(UUID id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Record not found for ID: " + id));
-    }
-
-    public List<BaseContact> findByStatus(String status) {
-        return repository.findByStatus(status);
-    }
-
+    @Transactional(readOnly = true)
     public List<BaseContact> findAll() {
         return repository.findAll();
     }
 
+    @Transactional(readOnly = true)
+    public BaseContact findById(UUID id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Record not found for target ID: " + id));
+    }
+
+    @Transactional(readOnly = true)
+    public List<BaseContact> findByStatus(String status) {
+        return repository.findByStatus(status);
+    }
+
+    /**
+     * Securely provisions a new Company or Contact record under the active tenant
+     * context.
+     */
     public BaseContact save(BaseContact contact) {
+        // Enforce Tenant Isolation: Capture business unit ID from the secure tenant
+        // filter thread context
+        String activeBuId = TenantContextFilter.CURRENT_TENANT.get();
+        if (activeBuId != null) {
+            contact.setBusinessUnitId(UUID.fromString(activeBuId));
+        } else if (contact.getBusinessUnitId() == null) {
+            throw new IllegalStateException("Cannot create a company profile without a valid Business Unit context.");
+        }
+
+        // Default initial system role for companies
+        if (contact instanceof Company) {
+            contact.setSystemRole("REGULAR");
+        }
+
         return repository.save(contact);
     }
 
+    /**
+     * Complete Polymorphic Single-Table Update Layer with historical tracking
+     * triggers.
+     */
     public BaseContact update(UUID id, BaseContact updatedContact) {
         return repository.findById(id).map(existing -> {
-            // 1. Capture history snapshot *before* mutating fields in the database
+
+            // 1. Snapshot prior state before executing row modifications
             captureTemporalSnapshot(existing, "UPDATE");
 
-            // 2. Map standard base shared properties
+            // 2. Map standard base metadata attributes
             existing.setName(updatedContact.getName());
             existing.setStatus(updatedContact.getStatus());
             existing.setNotes(updatedContact.getNotes());
             existing.setCustomAttributes(updatedContact.getCustomAttributes());
             existing.setParentCompany(updatedContact.getParentCompany());
 
-            // 3. Safe polymorphic subclass field matching
+            // 3. Match subclass signatures safely using pattern matching
             if (existing instanceof Contact existingGen && updatedContact instanceof Contact newGen) {
                 existingGen.setEmail(newGen.getEmail());
                 existingGen.setPhoneNumber(newGen.getPhoneNumber());
@@ -71,30 +91,33 @@ public class ContactService {
                 existingComp.setTaxId(newComp.getTaxId());
                 existingComp.setIndustry(newComp.getIndustry());
             } else {
-                throw new IllegalArgumentException("Changing contact classification type is not permitted.");
+                throw new IllegalArgumentException("Altering original contact classification type is forbidden.");
             }
 
             return repository.save(existing);
-        }).orElseThrow(() -> new IllegalArgumentException("Record not found for update ID: " + id));
+        }).orElseThrow(() -> new IllegalArgumentException("Record not found for update execution ID: " + id));
     }
 
+    /**
+     * Complete Delete Operation with terminal historical snapshot generation.
+     */
     public void delete(UUID id) {
         repository.findById(id).ifPresent(existing -> {
-            // Capture terminal snapshot right before database evacuation
             captureTemporalSnapshot(existing, "DELETE");
             repository.delete(existing);
         });
     }
 
     /**
-     * Executes the historical Point-In-Time query (AS-OF execution lookup).
+     * Restored: Executes Point-in-Time querying on historical logs.
      */
+    @Transactional(readOnly = true)
     public Optional<ContactHistory> getContactHistoricalState(UUID id, LocalDateTime asOfTime) {
         return historyRepository.findAsOf(id, asOfTime);
     }
 
     /**
-     * Internal method that builds and saves the historical audit state.
+     * Core Temporal Engine Hook: Assembles and records historical tracking maps.
      */
     private void captureTemporalSnapshot(BaseContact target, String action) {
         ContactHistory historyRecord = new ContactHistory();
@@ -106,7 +129,7 @@ public class ContactService {
         historyRecord.setCustomAttributes(target.getCustomAttributes());
         historyRecord.setSystemRole(target.getSystemRole());
 
-        // Extract sub-type unique metrics polymorphically safely
+        // Extract sub-type payload variables polymorphically safely
         if (target instanceof Contact c) {
             historyRecord.setEmail(c.getEmail());
             historyRecord.setPhoneNumber(c.getPhoneNumber());
@@ -116,14 +139,14 @@ public class ContactService {
             historyRecord.setIndustry(comp.getIndustry());
         }
 
-        // Set temporal tracking timelines
+        // Establish chronological data bounds
         historyRecord.setValidFrom(target.getUpdatedAt() != null ? target.getUpdatedAt() : target.getCreatedAt());
         historyRecord.setValidTo(LocalDateTime.now());
         historyRecord.setChangeAction(action);
 
-        // Resolve security actor context safely
+        // Trace mutations using the current active filter context execution context
         String currentActor = TenantContextFilter.CURRENT_TENANT.get();
-        historyRecord.setModifiedBy(currentActor != null ? currentActor : "SYSTEM");
+        historyRecord.setModifiedBy(currentActor != null ? currentActor : "SYSTEM_PROCESS");
 
         historyRepository.save(historyRecord);
     }

@@ -45,4 +45,9 @@ public abstract class BaseContact extends BaseEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "custom_attributes", columnDefinition = "jsonb")
     private Map<String, Object> customAttributes;
+
+    // Inside BaseContact.java
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_admin_id")
+    private Contact assignedAdmin; // Points directly to the internal employee's concrete database row
 }

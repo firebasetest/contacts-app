@@ -3,8 +3,8 @@ package com.mycompany.contact_app.security;
 import com.mycompany.contact_app.entity.BaseContact;
 import com.mycompany.contact_app.repository.ContactRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
+
 import java.util.UUID;
 
 @Component("contactSecurity")
@@ -17,64 +17,37 @@ public class ContactSecurityEvaluator {
     }
 
     /**
-     * Extracts the OIDC unique 'sub' identifier from the current security context
-     * context.
-     */
-    private String getCurrentExternalUserId() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof Jwt jwt) {
-            return jwt.getSubject(); // Returns the OIDC token 'sub' field
-        }
-        throw new IllegalStateException("Authentication principal is not a valid OIDC JWT token.");
-    }
-
-    /**
-     * Determines whether the current caller can manage the lifecycle of a target
-     * contact record.
+     * Determines whether the current actor can manage (update, delete) an existing
+     * contact.
      */
     public boolean canManageContact(UUID targetContactId) {
-        String externalId = getCurrentExternalUserId();
+        BaseContact actor = getCurrentActor();
 
-        // 1. Look up the actor contact profile
-        BaseContact actor = contactRepository.findByExternalUserId(externalId)
-                .orElseThrow(() -> new SecurityException("No registered contact profile found for actor identity."));
-
-        // If internal employee, allow anything within their BU context (Postgres RLS
-        // auto-filters BU scoping)
-        if ("INTERNAL_EMPLOYEE".equalsIgnoreCase(actor.getSystemRole())) {
+        // Rule A: Internal Employees & Onboarding Teams have global management access
+        if (isInternalOrOnboarding(actor)) {
             return true;
         }
 
-        // If delegated admin, perform structural company domain ownership matching
+        // Rule B: Delegated Admins can only mutate contacts belonging to their own
+        // company
         if ("DELEGATED_ADMIN".equalsIgnoreCase(actor.getSystemRole())) {
-            if (actor.getParentCompany() == null) {
-                return false; // A delegated admin must be associated with a corporate entity
-            }
-
-            UUID adminCompanyId = actor.getParentCompany().getId();
-
-            // Fetch target contact information
-            BaseContact target = contactRepository.findById(targetContactId)
+            BaseContact targetContact = contactRepository.findById(targetContactId)
                     .orElseThrow(() -> new IllegalArgumentException("Target contact record not found."));
 
-            // Allow management if and only if the target's company matches the delegated
-            // admin's company
-            return target.getParentCompany() != null && target.getParentCompany().getId().equals(adminCompanyId);
+            return isSameCompanyHierarchy(actor, targetContact);
         }
 
-        return false; // Baseline regular contacts cannot manage external records
+        return false;
     }
 
     /**
-     * Determines whether the caller can create a new contact under a specific
-     * parent company.
+     * Preserved: Validates if an actor can provision a new contact under a parent
+     * entity.
      */
     public boolean canCreateContactUnderCompany(UUID targetCompanyId) {
-        String externalId = getCurrentExternalUserId();
-        BaseContact actor = contactRepository.findByExternalUserId(externalId)
-                .orElseThrow(() -> new SecurityException("Access Denied: Unrecognized actor identity."));
+        BaseContact actor = getCurrentActor();
 
-        if ("INTERNAL_EMPLOYEE".equalsIgnoreCase(actor.getSystemRole())) {
+        if (isInternalOrOnboarding(actor)) {
             return true;
         }
 
@@ -86,13 +59,69 @@ public class ContactSecurityEvaluator {
     }
 
     /**
-     * Validates whether the caller has the administrative authorization required to
-     * assign delegated management roles.
+     * Preserved: Validates global administrative authority (e.g., role delegation
+     * targets).
      */
     public boolean isInternalEmployee() {
+        try {
+            BaseContact actor = getCurrentActor();
+            return isInternalOrOnboarding(actor);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Helper to isolate high-privilege operations personnel contexts.
+     */
+    private boolean isInternalOrOnboarding(BaseContact actor) {
+        String role = actor.getSystemRole();
+        return "INTERNAL_EMPLOYEE".equalsIgnoreCase(role) || "ONBOARDING_TEAM".equalsIgnoreCase(role);
+    }
+
+    /**
+     * Enforces corporate scoping boundaries between delegated actors and targets.
+     */
+    private boolean isSameCompanyHierarchy(BaseContact actor, BaseContact target) {
+        if (actor.getParentCompany() == null || target.getParentCompany() == null) {
+            return false;
+        }
+        return actor.getParentCompany().getId().equals(target.getParentCompany().getId());
+    }
+
+    /**
+     * Preserved: Resolves the active external subject context string from the JWT
+     * OIDC layer.
+     */
+    public String getCurrentExternalUserId() {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            throw new SecurityException("No active authentication context detected.");
+        }
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
+
+    /**
+     * Helper to load the current system actor profile out of the multi-tenant data
+     * layer.
+     */
+    private BaseContact getCurrentActor() {
         String externalId = getCurrentExternalUserId();
         return contactRepository.findByExternalUserId(externalId)
-                .map(actor -> "INTERNAL_EMPLOYEE".equalsIgnoreCase(actor.getSystemRole()))
-                .orElse(false);
+                .orElseThrow(() -> new SecurityException("Access Denied: Unrecognized caller system identity."));
+    }
+
+    /**
+     * Rule: Only internal operations or onboarding team members can create a new
+     * company profile.
+     * Delegated admins manage contacts within their pre-existing company but cannot
+     * create new companies.
+     */
+    public boolean canCreateCompany() {
+        try {
+            BaseContact actor = getCurrentActor();
+            return isInternalOrOnboarding(actor);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

@@ -30,6 +30,16 @@ public class ImportJob extends BaseEntity {
     @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
+    // Columns to capture the broken-down statistics for better reporting
+    @Column(name = "inserted_records")
+    private int insertedRecords = 0;
+
+    @Column(name = "updated_records")
+    private int updatedRecords = 0;
+
+    @Column(name = "failed_records")
+    private int failedRecords = 0;
+
     public void setBusinessUnitId(UUID fromString) {
         this.buId = fromString;
     }

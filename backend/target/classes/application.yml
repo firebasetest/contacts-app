@@ -1,0 +1,13 @@
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Replace with your actual Authorization Server issuer URI
+          # For Firebase: https://securetoken.google.com/your-firebase-project-id
+          issuer-uri: https://securetoken.google.com/your-firebase-project-id
+app:
+  security:
+    # Example plaintext token: "EMERGENCY_SECRET_2026_SUPER_VALID_TOKEN"
+    # Generate its BCrypt hash and store it securely here:
+    break-glass-token-hash: "$2a$12$e0MYz4D7b4t1MvQG2h8pEeJbW8gGgVCl.jTf/L5B7n6uX2kbywKkq"
