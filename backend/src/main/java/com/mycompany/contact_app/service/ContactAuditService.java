@@ -7,10 +7,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ContactAuditService {
-
+    private static final Logger log = LoggerFactory.getLogger(ContactAuditService.class);
     private final ContactHistoryRepository historyRepository;
     private final ContactService contactService;
 
@@ -39,7 +41,7 @@ public class ContactAuditService {
 
         for (ContactHistory current : rawHistory) {
             ContactHistoryResponseDto dto = new ContactHistoryResponseDto();
-            dto.setHistoryId(current.getId());
+            dto.setHistoryId(current.getHistoryId());
             dto.setVersion(current.getVersion());
             dto.setCaptureType(current.getCaptureType());
             dto.setValidFrom(current.getValidFrom());
@@ -114,5 +116,23 @@ public class ContactAuditService {
                 diffs.put("attribute." + key, String.format("Updated from '%s' to '%s'", oldV, newV));
             }
         }
+    }
+
+    /**
+     * Fetches the complete chronological history trail for a single contact record.
+     * PostgreSQL Row-Level Security automatically isolates visibility at the
+     * database layer.
+     */
+    @Transactional(readOnly = true)
+    public List<ContactHistory> getAuditTrailForEntity(UUID entityId) {
+        if (entityId == null) {
+            log.warn("Attempted to fetch audit log trail for a null entity identifier.");
+            return Collections.emptyList();
+        }
+
+        log.info("Fetching chronological change ledger trail for record: {}", entityId);
+
+        // Return sorted historical events matching our layout expectation
+        return historyRepository.findByEntityIdOrderByVersionDesc(entityId);
     }
 }

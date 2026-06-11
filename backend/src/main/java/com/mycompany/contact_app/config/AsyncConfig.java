@@ -11,12 +11,16 @@ import java.util.concurrent.Executor;
 public class AsyncConfig {
 
     @Bean(name = "importTaskExecutor")
-    public Executor taskExecutor() {
+    public Executor importTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(3);
-        executor.setMaxPoolSize(10);
+        executor.setCorePoolSize(8);
+        executor.setMaxPoolSize(16);
         executor.setQueueCapacity(500);
-        executor.setThreadNamePrefix("PlatformTask-");
+        executor.setThreadNamePrefix("ImportWorker-");
+
+        // This is the magic line binding context safely between threads
+        executor.setTaskDecorator(new TenantContextTaskDecorator());
+
         executor.initialize();
         return executor;
     }

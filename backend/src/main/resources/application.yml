@@ -11,3 +11,6 @@ app:
     # Example plaintext token: "EMERGENCY_SECRET_2026_SUPER_VALID_TOKEN"
     # Generate its BCrypt hash and store it securely here:
     break-glass-token-hash: "$2a$12$e0MYz4D7b4t1MvQG2h8pEeJbW8gGgVCl.jTf/L5B7n6uX2kbywKkq"
+twilio:
+  account-sid: ${TWILIO_ACCOUNT_SID:fallback_local_sid}
+  auth-token: ${TWILIO_AUTH_TOKEN:fallback_local_token}
