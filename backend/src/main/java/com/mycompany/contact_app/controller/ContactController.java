@@ -4,7 +4,6 @@ import com.mycompany.contact_app.entity.BaseContact;
 import com.mycompany.contact_app.entity.Company;
 import com.mycompany.contact_app.entity.ContactHistory;
 import com.mycompany.contact_app.service.BatchActionService;
-import com.mycompany.contact_app.service.ContactManagementService;
 import com.mycompany.contact_app.service.ContactService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,13 +18,10 @@ import java.util.UUID;
 public class ContactController {
     private final ContactService contactService;
     private final BatchActionService batchActionService;
-    private final ContactManagementService managementService;
 
-    public ContactController(ContactService contactService, BatchActionService batchActionService,
-            ContactManagementService managementService) {
+    public ContactController(ContactService contactService, BatchActionService batchActionService) {
         this.contactService = contactService;
         this.batchActionService = batchActionService;
-        this.managementService = managementService;
     }
 
     @GetMapping
@@ -78,7 +74,8 @@ public class ContactController {
      */
     @PostMapping("/{id}/delegate-admin")
     public ResponseEntity<Void> delegateAdminRole(@PathVariable UUID id) {
-        managementService.delegateAdministrativeRole(id);
+        // Routed directly to the corresponding capability in ContactService
+        contactService.delegateAdminRights(id);
         return ResponseEntity.noContent().build();
     }
 

@@ -2,7 +2,7 @@ package com.mycompany.contact_app.service;
 
 import com.mycompany.contact_app.entity.Contact;
 import com.mycompany.contact_app.repository.ContactRepository;
-import com.mycompany.contact_app.domain.LifecycleManager;
+import com.mycompany.contact_app.service.LifecycleManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;

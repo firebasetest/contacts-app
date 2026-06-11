@@ -1,6 +1,6 @@
 package com.mycompany.contact_app.config;
 
-import com.mycompany.contact_app.config.TenantContextFilter;
+import com.mycompany.contact_app.filter.TenantContextFilter;
 import com.mycompany.contact_app.service.IdentityProvisioningService;
 
 import org.springframework.core.convert.converter.Converter;

@@ -1,6 +1,6 @@
 package com.mycompany.contact_app.service;
 
-import com.mycompany.contact_app.domain.MetadataRegistry;
+import com.mycompany.contact_app.service.MetadataRegistry;
 import com.mycompany.contact_app.dto.ImportJobDTO;
 import com.mycompany.contact_app.dto.ImportRowDto;
 import com.mycompany.contact_app.entity.*;

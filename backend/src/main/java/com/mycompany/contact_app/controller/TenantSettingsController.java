@@ -1,6 +1,6 @@
 package com.mycompany.contact_app.controller;
 
-import com.mycompany.contact_app.config.TenantContextFilter;
+import com.mycompany.contact_app.filter.TenantContextFilter;
 import com.mycompany.contact_app.entity.TenantSettings;
 import jakarta.persistence.EntityManager;
 import org.springframework.http.ResponseEntity;

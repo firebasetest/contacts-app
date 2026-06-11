@@ -14,7 +14,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 
-import com.mycompany.contact_app.config.TenantContextFilter;
+import com.mycompany.contact_app.filter.TenantContextFilter;
 import com.mycompany.contact_app.dto.ImportJobDTO;
 import com.mycompany.contact_app.dto.ImportSummaryReportDto;
 import com.mycompany.contact_app.entity.ImportErrorLog;

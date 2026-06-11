@@ -17,6 +17,12 @@ public class LifecycleManager {
             throw new IllegalStateException(
                     "Illegal state transition from " + contact.getStatus() + " to " + newStatus);
         }
+        // Business Rule: Validate state transition
+        if ("ARCHIVED".equals(newStatus) && "LOCKED".equals(contact.getStatus())) {
+            throw new IllegalStateException("Cannot archive a locked contact.");
+        }
+
+        // Business Rule: Update status
         contact.setStatus(newStatus);
     }
 }

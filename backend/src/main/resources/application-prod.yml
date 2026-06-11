@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL} # Supplied securely via environment variables
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 10
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+# Strict production logging configurations
+logging:
+  level:
+    root: INFO
+    com.mycompany.contact_app: INFO
+    org.hibernate: WARN
+
+server:
+  error:
+    include-stacktrace: never # Prevent stack traces from exposing system internals

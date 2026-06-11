@@ -8,12 +8,14 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+@ControllerAdvice
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
@@ -79,4 +81,32 @@ public class GlobalExceptionHandler {
                 .build();
         return new ResponseEntity<>(apiException, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    // Handles illegal state transitions (e.g., ARCHIVED -> ACTIVE)
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Object> handleIllegalState(IllegalStateException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    // Handles database lookups that return empty (e.g., findById)
+    @ExceptionHandler(java.util.NoSuchElementException.class)
+    public ResponseEntity<Object> handleNotFound(java.util.NoSuchElementException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, "Resource not found");
+    }
+
+    // Catch-all for unexpected internal errors
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Object> handleGeneralException(Exception ex) {
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An internal server error occurred");
+    }
+
+    private ResponseEntity<Object> buildResponse(HttpStatus status, String message) {
+        Map<String, Object> body = Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", status.value(),
+                "error", status.getReasonPhrase(),
+                "message", message);
+        return new ResponseEntity<>(body, status);
+    }
+
 }
