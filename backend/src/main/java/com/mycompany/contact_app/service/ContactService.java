@@ -7,40 +7,44 @@ import com.mycompany.contact_app.entity.Contact;
 import com.mycompany.contact_app.entity.ContactHistory;
 import com.mycompany.contact_app.repository.ContactHistoryRepository;
 import com.mycompany.contact_app.repository.ContactRepository;
+import com.mycompany.contact_app.security.TenantContext;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class ContactService {
 
-    private final ContactRepository repository;
+    private final ContactRepository contactRepository;
     private final ContactHistoryRepository historyRepository;
 
-    public ContactService(ContactRepository repository, ContactHistoryRepository historyRepository) {
-        this.repository = repository;
+    public ContactService(ContactRepository contactRepository, ContactHistoryRepository historyRepository) {
+        this.contactRepository = contactRepository;
         this.historyRepository = historyRepository;
     }
 
     @Transactional(readOnly = true)
     public List<BaseContact> findAll() {
-        return repository.findAll();
+        return contactRepository.findAll();
     }
 
     @Transactional(readOnly = true)
     public BaseContact findById(UUID id) {
-        return repository.findById(id)
+        return contactRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Record not found for target ID: " + id));
     }
 
     @Transactional(readOnly = true)
     public List<BaseContact> findByStatus(String status) {
-        return repository.findByStatus(status);
+        return contactRepository.findByStatus(status);
     }
 
     /**
@@ -62,7 +66,7 @@ public class ContactService {
             contact.setSystemRole("REGULAR");
         }
 
-        return repository.save(contact);
+        return contactRepository.save(contact);
     }
 
     /**
@@ -70,7 +74,7 @@ public class ContactService {
      * triggers.
      */
     public BaseContact update(UUID id, BaseContact updatedContact) {
-        return repository.findById(id).map(existing -> {
+        return contactRepository.findById(id).map(existing -> {
 
             // 1. Snapshot prior state before executing row modifications
             captureTemporalSnapshot(existing, "UPDATE");
@@ -94,7 +98,7 @@ public class ContactService {
                 throw new IllegalArgumentException("Altering original contact classification type is forbidden.");
             }
 
-            return repository.save(existing);
+            return contactRepository.save(existing);
         }).orElseThrow(() -> new IllegalArgumentException("Record not found for update execution ID: " + id));
     }
 
@@ -102,9 +106,9 @@ public class ContactService {
      * Complete Delete Operation with terminal historical snapshot generation.
      */
     public void delete(UUID id) {
-        repository.findById(id).ifPresent(existing -> {
+        contactRepository.findById(id).ifPresent(existing -> {
             captureTemporalSnapshot(existing, "DELETE");
-            repository.delete(existing);
+            contactRepository.delete(existing);
         });
     }
 
@@ -150,4 +154,96 @@ public class ContactService {
 
         historyRepository.save(historyRecord);
     }
+
+    /**
+     * Fetches all records from the base partition and filters out instances
+     * matching the concrete Contact subtype.
+     */
+    public List<Contact> getAllContacts() {
+        return contactRepository.findAll().stream()
+                .filter(baseContact -> baseContact instanceof Contact)
+                .map(baseContact -> (Contact) baseContact)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Resolves an individual contact from the base table type and verifies
+     * that it matches the requested subtype layout boundary.
+     */
+    public Contact getContactById(UUID id) {
+        BaseContact baseContact = contactRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Contact record not found or inaccessible under current security context: " + id));
+
+        if (baseContact instanceof Contact contact) {
+            return contact;
+        }
+
+        throw new IllegalArgumentException(
+                "Requested record ID does not match the standard Contact schema subtype: " + id);
+    }
+
+    /**
+     * Prepares and persists a new contact entity, automatically upcasting
+     * it to the BaseContact representation for repository tracking.
+     */
+    @Transactional
+    public Contact createContact(Contact contact) {
+        String currentTenant = TenantContext.getCurrentTenant();
+        if (currentTenant != null) {
+            contact.setBusinessUnitId(UUID.fromString(currentTenant));
+        }
+
+        // Save returns BaseContact; cast it safely back to Contact
+        BaseContact savedBase = contactRepository.save(contact);
+        if (savedBase instanceof Contact savedContact) {
+            return savedContact;
+        }
+        throw new IllegalStateException(
+                "Database engine failed to return the expected concrete Contact entity subtype upon persistence.");
+    }
+
+    /**
+     * Executes GDPR Article 17 Right to Erasure. Permanently scrubs personal data
+     * identifiers
+     * (PII) while preserving structural history metrics inside the database schema
+     * partition.
+     */
+    @Transactional
+    public void anonymizeContact(UUID id) {
+        Contact contact = getContactById(id);
+
+        contact.setName("ANONYMIZED_CUSTOMER_" + UUID.randomUUID().toString().substring(0, 8));
+        contact.setEmail("deleted@tenant.local");
+        contact.setPhoneNumber(null);
+
+        // Clear any extended multi-tenant JSONB maps to ensure comprehensive scrub
+        if (contact.getCustomAttributes() != null) {
+            contact.getCustomAttributes().clear();
+        } else {
+            contact.setCustomAttributes(new HashMap<>());
+        }
+
+        contactRepository.save(contact);
+    }
+
+    /**
+     * Escalates internal authorization rules within a client domain partition
+     * by provisioning administrative delegation credentials.
+     */
+    @Transactional
+    public void delegateAdminRights(UUID id) {
+        Contact contact = getContactById(id);
+        contact.setSystemRole("DELEGATED_ADMIN");
+        contactRepository.save(contact);
+    }
+
+    /**
+     * Main legacy method wrapper keeping parity with original base code signatures.
+     */
+    @Transactional
+    public Contact saveContact(Contact contact) {
+        return createContact(contact);
+    }
+
 }
