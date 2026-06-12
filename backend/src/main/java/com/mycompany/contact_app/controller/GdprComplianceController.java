@@ -2,6 +2,7 @@ package com.mycompany.contact_app.controller;
 
 import com.mycompany.contact_app.dto.ContactDataPortabilityDto;
 import com.mycompany.contact_app.service.GdprComplianceService;
+import com.mycompany.contact_app.service.ConsentService; // Import CMS service
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -13,9 +14,11 @@ import java.util.UUID;
 public class GdprComplianceController {
 
     private final GdprComplianceService complianceService;
+    private final ConsentService consentService; // Inject CMS Service
 
-    public GdprComplianceController(GdprComplianceService complianceService) {
+    public GdprComplianceController(GdprComplianceService complianceService, ConsentService consentService) {
         this.complianceService = complianceService;
+        this.consentService = consentService;
     }
 
     /**
