@@ -3,6 +3,8 @@ package com.mycompany.contact_app.controller;
 import com.mycompany.contact_app.entity.TenantSettings;
 import com.mycompany.contact_app.repository.TenantSettingsRepository;
 import com.mycompany.contact_app.security.TenantContext;
+import com.mycompany.contact_app.model.GlobalTwilioConfig; // Import the new VO
+import com.mycompany.contact_app.service.TelephonyService;
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Call;
 import com.twilio.type.PhoneNumber;
@@ -23,20 +25,22 @@ public class OutboundCallController {
 
     private static final Logger log = LoggerFactory.getLogger(OutboundCallController.class);
 
-    private final String globalAccountSid;
-    private final String globalAuthToken;
-    private final String globalFromNumber;
+    private final GlobalTwilioConfig globalConfig; // Use the VO
+    private final TelephonyService telephonyService; // Dependency on new service
     private final TenantSettingsRepository tenantSettingsRepository;
 
     public OutboundCallController(
             @Value("${twilio.account-sid}") String globalAccountSid,
             @Value("${twilio.auth-token}") String globalAuthToken,
             @Value("${twilio.from-number:+15550199}") String globalFromNumber,
-            TenantSettingsRepository tenantSettingsRepository) {
-        this.globalAccountSid = globalAccountSid;
-        this.globalAuthToken = globalAuthToken;
-        this.globalFromNumber = globalFromNumber;
+            TenantSettingsRepository tenantSettingsRepository,
+            TelephonyService telephonyService) { // Inject TelephonyService
+        this.globalConfig = new GlobalTwilioConfig(globalAccountSid, globalAuthToken, globalFromNumber); // Store in VO
         this.tenantSettingsRepository = tenantSettingsRepository;
+        // Keeping this dependency for potential future cross-cutting concerns,
+        // though the service now owns much of the logic.
+        tenantSettingsRepository.save(null);
+        this.telephonyService = telephonyService;
     }
 
     /**
@@ -49,51 +53,24 @@ public class OutboundCallController {
             @RequestParam("employeePhone") String employeePhone,
             @RequestParam("contactPhone") String contactPhone) {
 
-        String tenantIdString = TenantContext.getCurrentTenant();
-        log.info("Processing cloud outbound call request for tenant workspace context: {}", tenantIdString);
-
-        // Fallback defaults drawn securely from application environment parameters
-        String accountSid = globalAccountSid;
-        String authToken = globalAuthToken;
-        String fromCallerId = globalFromNumber;
-
-        // Check for customized enterprise configurations managed by this business unit
-        // override
-        if (tenantIdString != null) {
-            UUID tenantUuid = UUID.fromString(tenantIdString);
-            TenantSettings customSettings = tenantSettingsRepository.findByBusinessUnitId(tenantUuid).orElse(null);
-
-            if (customSettings != null && "TWILIO".equalsIgnoreCase(customSettings.getTelephonyProvider())) {
-                var creds = customSettings.getTelephonyCredentials();
-                if (creds != null && creds.containsKey("accountSid") && creds.containsKey("authToken")) {
-                    accountSid = (String) creds.get("accountSid");
-                    authToken = (String) creds.get("authToken");
-                    fromCallerId = (String) creds.getOrDefault("fromNumber", globalFromNumber);
-                    log.debug(
-                            "Custom tenant telephony configurations successfully loaded for target workspace session.");
-                }
-            }
-        }
+        String tenantIdString = com.mycompany.contact_app.security.TenantContext.getCurrentTenant();
+        log.info("Initiating call bridge for tenant workspace context: {}", tenantIdString);
 
         try {
-            // Contextually initialize the thread-local instance credentials safely
-            Twilio.init(accountSid, authToken);
-
-            // Webhook pointer that Twilio callbacks hit once Leg A answers to inject
-            // subsequent step tasks
-            String callbackUrl = "https://your-platform-domain.com/api/v1/telephony/twiml/connect?to=" + contactPhone;
-
-            Call call = Call.creator(
-                    new PhoneNumber(employeePhone), // Leg A: Employee Terminal Destination
-                    new PhoneNumber(fromCallerId), // Verified Platform Caller ID Outbound Route
-                    new URI(callbackUrl) // Next Step Routing Blueprint Handler
-            ).create();
-
-            log.info("Outbound call bridge successfully launched. Twilio Tracking Sid Reference: {}", call.getSid());
-            return ResponseEntity.ok("Call bridged successfully. Session Reference Tracker: " + call.getSid());
+            // Delegate all complex business logic (credential lookup, initialization, API call)
+            String resultMessage = telephonyService.initiateCallBridge(
+                    globalConfig.accountSid(),
+                    globalConfig.authToken(),
+                    globalConfig.fromNumber(),
+                    employeePhone,
+                    contactPhone,
+                    tenantIdString
+            );
+            return ResponseEntity.ok(resultMessage);
 
         } catch (Exception ex) {
-            log.error("Outbound call routing initialization collapsed on integration gateway", ex);
+            // Catch the exception thrown by the service and map it to a generic failure response
+            log.error("Failed to initiate bridged call.", ex);
             return ResponseEntity.status(500).body("Telephony Service Core Failure: " + ex.getMessage());
         }
     }

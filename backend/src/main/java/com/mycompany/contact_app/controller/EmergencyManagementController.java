@@ -1,7 +1,7 @@
 package com.mycompany.contact_app.controller;
 
 import com.mycompany.contact_app.entity.BaseContact;
-import com.mycompany.contact_app.service.ContactService;
+import com.mycompany.contact_app.service.EmergencyService; // Use the new service
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -15,10 +15,11 @@ import java.util.UUID;
 public class EmergencyManagementController {
 
     private static final Logger log = LoggerFactory.getLogger(EmergencyManagementController.class);
-    private final ContactService contactService;
+    private final EmergencyService emergencyService; // Use the new service
 
-    public EmergencyManagementController(ContactService contactService) {
-        this.contactService = contactService;
+    // Dependency Injection updated to use EmergencyService
+    public EmergencyManagementController(EmergencyService emergencyService) {
+        this.emergencyService = emergencyService;
     }
 
     /**
@@ -30,7 +31,8 @@ public class EmergencyManagementController {
     @GetMapping("/contacts")
     public ResponseEntity<List<BaseContact>> emergencyListTenantRecords() {
         log.error("EMERGENCY EXECUTION: Extracting full multi-tenant dataset rows.");
-        return ResponseEntity.ok(contactService.findAll());
+        // Delegate execution to the dedicated service method
+        return ResponseEntity.ok(emergencyService.getAllTenantRecords());
     }
 
     /**
@@ -40,8 +42,8 @@ public class EmergencyManagementController {
     public ResponseEntity<BaseContact> emergencyUpdateRecord(@PathVariable UUID id,
             @RequestBody BaseContact baseContactUpdate) {
         log.error("EMERGENCY EXECUTION: Force muting record modification on Target Object ID: {}", id);
-        BaseContact repairedRecord = contactService.update(id, baseContactUpdate);
-        return ResponseEntity.ok(repairedRecord);
+        // Delegate execution to the dedicated service method
+        return ResponseEntity.ok(emergencyService.repairRecord(id, baseContactUpdate));
     }
 
     /**
@@ -50,7 +52,8 @@ public class EmergencyManagementController {
     @DeleteMapping("/contacts/{id}")
     public ResponseEntity<Void> emergencyDeleteRecord(@PathVariable UUID id) {
         log.error("EMERGENCY EXECUTION: Force purging object entity reference tracking on ID: {}", id);
-        contactService.delete(id);
+        // Delegate execution to the dedicated service method
+        emergencyService.purgeRecord(id);
         return ResponseEntity.noContent().build();
     }
 }

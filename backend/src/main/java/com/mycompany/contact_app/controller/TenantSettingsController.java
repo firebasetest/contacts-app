@@ -2,6 +2,7 @@ package com.mycompany.contact_app.controller;
 
 import com.mycompany.contact_app.filter.TenantContextFilter;
 import com.mycompany.contact_app.entity.TenantSettings;
+import com.mycompany.contact_app.exception.MissingTenantClaimException;
 import jakarta.persistence.EntityManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,19 @@ public class TenantSettingsController {
     @GetMapping
     @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> getActiveClientConfig() {
+        // CRITICAL FIX: Validate tenant context first to ensure robustness against null/unauthenticated users.
+        String tenantIdString = com.mycompany.contact_app.security.TenantContextFilter.CURRENT_TENANT.get();
+        if (tenantIdString == null || tenantIdString.isBlank()) {
+            throw new MissingTenantClaimException("Cannot retrieve client configuration: Tenant context is missing or unset.");
+        }
+
+        UUID tenantId;
+        try {
+            tenantId = UUID.fromString(tenantIdString);
+        } catch (IllegalArgumentException e) {
+            throw new MissingTenantClaimException("Invalid Business Unit ID in current context: " + tenantIdString);
+        }
+
         UUID tenantId = UUID.fromString(TenantContextFilter.CURRENT_TENANT.get());
 
         TenantSettings settings = entityManager.find(TenantSettings.class, tenantId);
@@ -44,9 +58,22 @@ public class TenantSettingsController {
         sanitizedPayload.put("isAuditViewEnabled", settings.isAuditViewEnabled());
 
         // Expose public properties only (e.g., source caller ID numbers)
+        // FIX: Instead of exposing a generic map, we create a structured VO payload
         Map<String, Object> publicCredentials = new HashMap<>();
         if (settings.getTelephonyCredentials() != null) {
-            publicCredentials.put("fromNumber", settings.getTelephonyCredentials().get("fromNumber"));
+            var credsMap = settings.getTelephonyCredentials();
+            String fromNumber = (String) credsMap.get("fromNumber");
+
+            // Create a strongly typed payload for easier consumption by frontend/client code
+            publicCredentials.put("accountSid", credsMap.get("accountSid"));
+            publicCredentials.put("authToken", credsMap.get("authToken"));
+            publicCredentials.put("fromNumber", fromNumber);
+
+        } else {
+            // Provide a default structure even if no credentials exist
+            publicCredentials.put("accountSid", null);
+            publicCredentials.put("authToken", null);
+            publicCredentials.put("fromNumber", null);
         }
         sanitizedPayload.put("telephonyConfig", publicCredentials);
 

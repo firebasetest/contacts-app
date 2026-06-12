@@ -34,9 +34,11 @@ class TenantAwareDataSource extends DelegatingDataSource {
     private void applyTenantContext(Connection connection) throws SQLException {
         String tenantId = TenantContext.getCurrentTenant();
         if (tenantId != null) {
-            try (Statement stmt = connection.createStatement()) {
+            try (PreparedStatement stmt = connection.prepareStatement("SET LOCAL app.current_tenant = ?")) {
+                // Use setString instead of concatenation for safety
+                stmt.setString(1, tenantId);
                 // Safely isolated within the leased transaction boundary
-                stmt.execute("SET LOCAL app.current_tenant = '" + tenantId + "'");
+                stmt.execute();
             }
         }
     }

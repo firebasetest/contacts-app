@@ -2,6 +2,7 @@ package com.mycompany.contact_app.config;
 
 import com.mycompany.contact_app.filter.TenantContextFilter;
 import com.mycompany.contact_app.service.IdentityProvisioningService;
+import com.mycompany.contact_app.exception.MissingTenantClaimException;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -32,6 +33,9 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, Abstract
         if (jwt.hasClaim("business_unit_id")) {
             String tokenBuId = jwt.getClaimAsString("business_unit_id");
             TenantContextFilter.CURRENT_TENANT.set(tokenBuId);
+        } else {
+            // CRITICAL FIX: Throw exception if tenant context is missing from JWT
+            throw new MissingTenantClaimException("JWT must contain the 'business_unit_id' claim for multi-tenant security enforcement.");
         }
 
         // 3. CRITICAL TRIGGER: Execute the JIT check.

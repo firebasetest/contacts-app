@@ -33,7 +33,7 @@ public class ContactController {
     public ResponseEntity<BaseContact> get(@PathVariable UUID id) {
         try {
             return ResponseEntity.ok(contactService.findById(id));
-        } catch (IllegalArgumentException e) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
     }
@@ -46,7 +46,7 @@ public class ContactController {
         LocalDateTime targetTime = LocalDateTime.parse(asOfIsoString);
         return contactService.getContactHistoricalState(id, targetTime)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElseThrow(() -> new ResourceNotFoundException("Historical record not found for ID: " + id)); // Throw specific exception
     }
 
     @PostMapping

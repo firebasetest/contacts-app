@@ -24,6 +24,8 @@ public class GdprComplianceController {
     @GetMapping("/{id}/export")
     @PreAuthorize("hasRole('ROLE_DPO') or @contactSecurity.isInternalEmployee()")
     public ResponseEntity<ContactDataPortabilityDto> exportUserInformationProfile(@PathVariable UUID id) {
+        // Assuming complianceService handles the ResourceNotFound logic and throws a specific exception if user doesn't exist.
+        // If it fails to fetch, we rely on its internal error handling or let the DAO layer throw a clear exception.
         ContactDataPortabilityDto portabilityDump = complianceService.exportPersonalDataDump(id);
         return ResponseEntity.ok(portabilityDump);
     }
@@ -34,6 +36,8 @@ public class GdprComplianceController {
     @PutMapping("/{id}/anonymize")
     @PreAuthorize("hasRole('ROLE_DPO') or @contactSecurity.isInternalEmployee()")
     public ResponseEntity<Void> eraseUserInformationProfile(@PathVariable UUID id) {
+        // If the resource is not found, we might consider returning 204 (No Content) rather than failing the request entirely,
+        // but for consistency with other updates, throwing ResourceNotFoundException is safer here.
         complianceService.executeRightToErasure(id);
         return ResponseEntity.noContent().build();
     }

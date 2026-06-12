@@ -6,6 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Data
 @NoArgsConstructor
@@ -17,4 +20,9 @@ public class ApiException {
     private String message;
     private LocalDateTime timestamp;
     private String path;
+
+    // This ensures the "errors" payload item is hidden entirely unless a validation
+    // failure occurs
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Map<String, String> errors;
 }
