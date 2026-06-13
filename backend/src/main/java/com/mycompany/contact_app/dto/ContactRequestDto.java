@@ -4,7 +4,7 @@ import lombok.Data;
 import java.util.Map;
 
 @Data
-public class ContactRequest {
+public class ContactRequestDto {
     private String name;
     private String email;
     private String phoneNumber;
