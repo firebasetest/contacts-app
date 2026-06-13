@@ -2,8 +2,10 @@
 package com.mycompany.contact_app.model;
 
 /**
- * Defines the specific legal purposes for which consent can be granted or revoked.
- * Using an Enum ensures type safety across the application when checking permissions.
+ * Defines the specific legal purposes for which consent can be granted or
+ * revoked.
+ * Using an Enum ensures type safety across the application when checking
+ * permissions.
  */
 public enum ConsentPurpose {
     PHONE_CALLING("ENABLEMENT: TELEPHONY CALLING", "Allows platform to initiate outbound calls."),
@@ -18,7 +20,7 @@ public enum ConsentPurpose {
         this.description = description;
     }
 
-    public ConsentPurpose(String key) {
+    ConsentPurpose(String key) {
         this(key, null); // Constructor for purposes without descriptions
     }
 

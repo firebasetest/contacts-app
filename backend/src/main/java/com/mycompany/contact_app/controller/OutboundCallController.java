@@ -3,6 +3,7 @@ package com.mycompany.contact_app.controller;
 import com.mycompany.contact_app.entity.TenantSettings;
 import com.mycompany.contact_app.repository.TenantSettingsRepository;
 import com.mycompany.contact_app.security.TenantContext;
+import com.mycompany.contact_app.model.ConsentPurpose;
 import com.mycompany.contact_app.model.GlobalTwilioConfig; // Import the new VO
 import com.mycompany.contact_app.service.TelephonyService;
 import com.mycompany.contact_app.service.ConsentService; // Import new service
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api/v1/telephony")
@@ -65,26 +67,29 @@ public class OutboundCallController {
 
         // --- CONSENT CHECK INTEGRATION POINT ---
         if (!consentService.hasConsent(principalUuid, ConsentPurpose.PHONE_CALLING)) {
-            log.warn("SECURITY BLOCK: Attempted call for tenant {} denied due to lack of explicit consent.", principalUuid);
-            return ResponseEntity.status(403).body("Telephony Service Blocked: Consent is required before initiating calls.");
+            log.warn("SECURITY BLOCK: Attempted call for tenant {} denied due to lack of explicit consent.",
+                    principalUuid);
+            return ResponseEntity.status(403)
+                    .body("Telephony Service Blocked: Consent is required before initiating calls.");
         }
 
         log.info("Initiating call bridge for tenant workspace context: {}", tenantIdString);
 
         try {
-            // Delegate all complex business logic (credential lookup, initialization, API call)
+            // Delegate all complex business logic (credential lookup, initialization, API
+            // call)
             String resultMessage = telephonyService.initiateCallBridge(
                     globalConfig.accountSid(),
                     globalConfig.authToken(),
                     globalConfig.fromNumber(),
                     employeePhone,
                     contactPhone,
-                    tenantIdString
-            );
+                    tenantIdString);
             return ResponseEntity.ok(resultMessage);
 
         } catch (Exception ex) {
-            // Catch the exception thrown by the service and map it to a generic failure response
+            // Catch the exception thrown by the service and map it to a generic failure
+            // response
             log.error("Failed to initiate bridged call.", ex);
             return ResponseEntity.status(500).body("Telephony Service Core Failure: " + ex.getMessage());
         }
@@ -110,17 +115,21 @@ public class OutboundCallController {
     }
 
     /**
-     * Validates that all critical Twilio configuration parameters are present and follow expected formats.
-     * Throws an IllegalStateException if any mandatory fields are missing or invalid.
+     * Validates that all critical Twilio configuration parameters are present and
+     * follow expected formats.
+     * Throws an IllegalStateException if any mandatory fields are missing or
+     * invalid.
      */
     private void validateCriticalConfiguration() {
         // Simple regex for pattern checking (e.g., digits, alphanumeric structure)
-        // NOTE: Production code might need stricter validation depending on Twilio's actual format rules.
+        // NOTE: Production code might need stricter validation depending on Twilio's
+        // actual format rules.
         final String SID_PATTERN = "^[a-zA-Z0-9]{15,30}$";
         final Pattern sidPattern = Pattern.compile(SID_PATTERN);
 
         if (globalConfig.accountSid() == null || !sidPattern.matcher(globalConfig.accountSid()).matches()) {
-            throw new IllegalStateException("CRITICAL CONFIG ERROR: Mandatory 'twilio.account-sid' is missing or has an invalid format.");
+            throw new IllegalStateException(
+                    "CRITICAL CONFIG ERROR: Mandatory 'twilio.account-sid' is missing or has an invalid format.");
         }
         if (globalConfig.authToken() == null) {
             throw new IllegalStateException("CRITICAL CONFIG ERROR: Mandatory 'twilio.auth-token' must be provided.");

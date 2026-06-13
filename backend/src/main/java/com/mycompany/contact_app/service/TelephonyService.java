@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 import com.twilio.rest.api.v2010.account.Call;
 import com.twilio.type.PhoneNumber;
-import com.twilio.wrapper.Twilio; // Assuming Twilio initialization is done here
+import com.twilio.Twilio; // Assuming Twilio initialization is done here
 
 /**
  * Dedicated service layer for managing outgoing telephony calls,
@@ -23,7 +23,8 @@ public class TelephonyService {
     private static final Logger log = LoggerFactory.getLogger(TelephonyService.class);
 
     private final TenantSettingsRepository tenantSettingsRepository;
-    // Dependency Injection for configuration values (These are better managed via constructor parameters
+    // Dependency Injection for configuration values (These are better managed via
+    // constructor parameters
     // or passed in, but we keep the structure similar to the controller for now)
 
     public TelephonyService(TenantSettingsRepository tenantSettingsRepository) {
@@ -31,9 +32,11 @@ public class TelephonyService {
     }
 
     /**
-     * Attempts to retrieve customized credentials and account details based on the current tenant context.
+     * Attempts to retrieve customized credentials and account details based on the
+     * current tenant context.
      */
-    private boolean loadContextualCredentials(String tenantIdString, String[] globalAccountSid, String[] globalAuthToken, String[] fromCallerId) {
+    private boolean loadContextualCredentials(String tenantIdString, String[] globalAccountSid,
+            String[] globalAuthToken, String[] fromCallerId, String globalFromNumber) {
         if (tenantIdString == null || tenantIdString.isBlank()) {
             return false; // Cannot find tenant context
         }
@@ -54,9 +57,11 @@ public class TelephonyService {
                     if (accId != null && authTok != null) {
                         globalAccountSid[0] = accId;
                         globalAuthToken[0] = authTok;
-                        // Use the default number if custom one is missing, or null to allow the caller to handle it.
+                        // Use the default number if custom one is missing, or null to allow the caller
+                        // to handle it.
                         fromCallerId[0] = fromNum != null ? fromNum : globalFromNumber;
-                        log.debug("Custom tenant telephony configurations successfully loaded for target workspace session.");
+                        log.debug(
+                                "Custom tenant telephony configurations successfully loaded for target workspace session.");
                         return true;
                     }
                 }
@@ -73,14 +78,16 @@ public class TelephonyService {
      * an external client, orchestrating credential retrieval and API call.
      */
     public String initiateCallBridge(String globalAccountSid, String globalAuthToken, String globalFromNumber,
-                                     String employeePhone, String contactPhone, String tenantIdString) throws Exception {
+            String employeePhone, String contactPhone, String tenantIdString) throws Exception {
 
-        // Use mutable wrappers (arrays of String) to allow the method to modify the credentials safely
-        String[] accountSid = new String[]{globalAccountSid};
-        String[] authToken = new String[]{globalAuthToken};
-        String[] fromCallerId = new String[]{globalFromNumber};
+        // Use mutable wrappers (arrays of String) to allow the method to modify the
+        // credentials safely
+        String[] accountSid = new String[] { globalAccountSid };
+        String[] authToken = new String[] { globalAuthToken };
+        String[] fromCallerId = new String[] { globalFromNumber };
 
-        boolean success = loadContextualCredentials(tenantIdString, accountSid, authToken, fromCallerId);
+        boolean success = loadContextualCredentials(tenantIdString, accountSid, authToken, fromCallerId,
+                globalFromNumber);
 
         try {
             // Contextually initialize the thread-local instance credentials safely
@@ -91,7 +98,8 @@ public class TelephonyService {
                 throw new IllegalStateException("Failed to resolve a valid outbound caller ID.");
             }
 
-            // Webhook pointer that Twilio callbacks hit once Leg A answers to inject subsequent step tasks
+            // Webhook pointer that Twilio callbacks hit once Leg A answers to inject
+            // subsequent step tasks
             String callbackUrl = "https://your-platform-domain.com/api/v1/telephony/twiml/connect?to=" + contactPhone;
 
             Call call = Call.creator(

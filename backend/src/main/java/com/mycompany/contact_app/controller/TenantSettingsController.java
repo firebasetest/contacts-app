@@ -29,10 +29,12 @@ public class TenantSettingsController {
     @GetMapping
     @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> getActiveClientConfig() {
-        // CRITICAL FIX: Validate tenant context first to ensure robustness against null/unauthenticated users.
-        String tenantIdString = com.mycompany.contact_app.security.TenantContextFilter.CURRENT_TENANT.get();
+        // CRITICAL FIX: Validate tenant context first to ensure robustness against
+        // null/unauthenticated users.
+        String tenantIdString = com.mycompany.contact_app.filter.TenantContextFilter.CURRENT_TENANT.get();
         if (tenantIdString == null || tenantIdString.isBlank()) {
-            throw new MissingTenantClaimException("Cannot retrieve client configuration: Tenant context is missing or unset.");
+            throw new MissingTenantClaimException(
+                    "Cannot retrieve client configuration: Tenant context is missing or unset.");
         }
 
         UUID tenantId;
@@ -41,8 +43,6 @@ public class TenantSettingsController {
         } catch (IllegalArgumentException e) {
             throw new MissingTenantClaimException("Invalid Business Unit ID in current context: " + tenantIdString);
         }
-
-        UUID tenantId = UUID.fromString(TenantContextFilter.CURRENT_TENANT.get());
 
         TenantSettings settings = entityManager.find(TenantSettings.class, tenantId);
 
@@ -64,7 +64,8 @@ public class TenantSettingsController {
             var credsMap = settings.getTelephonyCredentials();
             String fromNumber = (String) credsMap.get("fromNumber");
 
-            // Create a strongly typed payload for easier consumption by frontend/client code
+            // Create a strongly typed payload for easier consumption by frontend/client
+            // code
             publicCredentials.put("accountSid", credsMap.get("accountSid"));
             publicCredentials.put("authToken", credsMap.get("authToken"));
             publicCredentials.put("fromNumber", fromNumber);

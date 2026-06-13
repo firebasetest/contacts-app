@@ -3,6 +3,7 @@ package com.mycompany.contact_app.controller;
 import com.mycompany.contact_app.entity.BaseContact;
 import com.mycompany.contact_app.entity.Company;
 import com.mycompany.contact_app.entity.ContactHistory;
+import com.mycompany.contact_app.exception.ResourceNotFoundException;
 import com.mycompany.contact_app.service.BatchActionService;
 import com.mycompany.contact_app.service.ContactService;
 import org.springframework.http.ResponseEntity;
@@ -46,7 +47,9 @@ public class ContactController {
         LocalDateTime targetTime = LocalDateTime.parse(asOfIsoString);
         return contactService.getContactHistoricalState(id, targetTime)
                 .map(ResponseEntity::ok)
-                .orElseThrow(() -> new ResourceNotFoundException("Historical record not found for ID: " + id)); // Throw specific exception
+                .orElseThrow(() -> new ResourceNotFoundException("Historical record not found for ID: " + id)); // Throw
+                                                                                                                // specific
+                                                                                                                // exception
     }
 
     @PostMapping
