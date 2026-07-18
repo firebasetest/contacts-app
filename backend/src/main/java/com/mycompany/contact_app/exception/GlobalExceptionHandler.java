@@ -11,7 +11,8 @@ import org.springframework.web.context.request.WebRequest;
 import java.time.LocalDateTime;
 
 /**
- * Global handler for business and technical exceptions, ensuring consistent API error responses.
+ * Global handler for business and technical exceptions, ensuring consistent API
+ * error responses.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -49,14 +50,12 @@ public class GlobalExceptionHandler {
     }
 
     // Handles general API validation failures (e.g., missing required JSON fields)
-    @ExceptionHandler({MethodArgumentNotValidException.class, MissingTenantClaimException.class})
+    @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ProblemDetail handleValidationFailure(Exception ex, WebRequest request) {
+    public ProblemDetail handleValidationFailure(MethodArgumentNotValidException ex, WebRequest request) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         problem.setTitle("Bad Request");
-        String detailMessage = (ex instanceof MethodArgumentNotValidException)
-                ? "Invalid request parameters." : ex.getMessage();
-        problem.setDetail(detailMessage);
+        problem.setDetail("Invalid request parameters.");
         return problem;
     }
 

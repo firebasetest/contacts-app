@@ -8,13 +8,35 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-// Mock Metadata Schema fetched from your backend's MetadataRegistry per tenant
-const MOCK_METADATA_FIELDS = [
+// Default metadata schema used when no BU-scoped definitions are available yet.
+const DEFAULT_METADATA_FIELDS = [
   { name: 'twitterHandle', label: 'Twitter Handle', type: 'text', placeholder: '@username', required: false },
   { name: 'contractValue', label: 'ARR Contract Value ($)', type: 'number', placeholder: '50000', required: false },
   { name: 'tier', label: 'Service Level Tier', type: 'select', options: ['Enterprise VIP', 'Growth Mid-Market', 'Self-Serve Sandbox'], required: true },
   { name: 'vipStatus', label: 'Executive Governance Scope', type: 'boolean', required: false }
 ];
+
+const mapDefinitionToField = (definition) => {
+  const type = (definition.dataType || 'STRING').toUpperCase();
+  let fieldType = 'text';
+
+  if (type.includes('NUMBER') || type.includes('INTEGER') || type.includes('DECIMAL')) {
+    fieldType = 'number';
+  } else if (type.includes('BOOLEAN')) {
+    fieldType = 'boolean';
+  } else if (type.includes('SELECT')) {
+    fieldType = 'select';
+  }
+
+  return {
+    name: definition.name,
+    label: definition.name.replace(/([A-Z])/g, ' $1').replace(/^./, (value) => value.toUpperCase()),
+    type: fieldType,
+    placeholder: definition.name,
+    required: Boolean(definition.required),
+    options: Array.isArray(definition.validationRules?.options) ? definition.validationRules.options : []
+  };
+};
 
 const BLANK_FORM_TEMPLATE = {
   name: '',
@@ -47,12 +69,33 @@ export default function ContactDetail({ contactId, onBack }) {
   const [isEditing, setIsEditing] = useState(isCreateMode);
   const [isSaving, setIsSaving] = useState(false);
   const [asOfTimestamp, setAsOfTimestamp] = useState('');
-  const [metadataFields, setMetadataFields] = useState(MOCK_METADATA_FIELDS);
+  const [metadataFields, setMetadataFields] = useState(DEFAULT_METADATA_FIELDS);
   const [formData, setFormData] = useState(BLANK_FORM_TEMPLATE);
 
   // Evaluate structural fallback bindings
   const activeRecord = historicalState || profile;
   const isTimeTraveling = !!historicalState;
+
+  useEffect(() => {
+    const loadMetadataFields = async () => {
+      const tenantId = localStorage.getItem('active_bu_id') || '11111111-1111-1111-1111-111111111111';
+      try {
+        const { data } = await axiosClient.get('/contacts/attribute-definitions', {
+          params: { buId: tenantId }
+        });
+
+        if (Array.isArray(data) && data.length > 0) {
+          setMetadataFields(data.map(mapDefinitionToField));
+        } else {
+          setMetadataFields(DEFAULT_METADATA_FIELDS);
+        }
+      } catch (error) {
+        setMetadataFields(DEFAULT_METADATA_FIELDS);
+      }
+    };
+
+    loadMetadataFields();
+  }, []);
 
   // 3. Hydrate form elements whenever structural dataset records clear or load
   useEffect(() => {
