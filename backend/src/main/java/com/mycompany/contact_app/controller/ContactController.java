@@ -1,7 +1,9 @@
 package com.mycompany.contact_app.controller;
 
+import com.mycompany.contact_app.dto.ContactRequestDto;
 import com.mycompany.contact_app.entity.BaseContact;
 import com.mycompany.contact_app.entity.Company;
+import com.mycompany.contact_app.entity.Contact;
 import com.mycompany.contact_app.entity.ContactHistory;
 import com.mycompany.contact_app.exception.ResourceNotFoundException;
 import com.mycompany.contact_app.service.BatchActionService;
@@ -53,7 +55,13 @@ public class ContactController {
     }
 
     @PostMapping
-    public BaseContact create(@RequestBody BaseContact contact) {
+    public BaseContact create(@RequestBody ContactRequestDto request) {
+        Contact contact = new Contact();
+        contact.setName(request.getName());
+        contact.setEmail(request.getEmail());
+        contact.setPhoneNumber(request.getPhoneNumber());
+        contact.setStatus(request.getStatus() != null ? request.getStatus() : "ACTIVE");
+        contact.setCustomAttributes(request.getCustomAttributes());
         return contactService.save(contact);
     }
 

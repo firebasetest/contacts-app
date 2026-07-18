@@ -5,6 +5,7 @@ import com.mycompany.contact_app.service.IdentityProvisioningService;
 import com.mycompany.contact_app.exception.MissingTenantClaimException;
 
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -22,7 +23,7 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, Abstract
     }
 
     @Override
-    public AbstractAuthenticationToken convert(Jwt jwt) {
+    public AbstractAuthenticationToken convert(@NonNull Jwt jwt) {
         // 1. Extract default scopes/roles if present
         var authorities = defaultAuthoritiesConverter.convert(jwt);
 
