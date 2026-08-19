@@ -1,0 +1,11 @@
+{
+  "telephony": {
+    "provider": "TWILIO", 
+    "enabled": true,
+    "credentials": {
+      "accountSid": "ACxxxxxx",
+      "authToken": "enc_token_xxxx",
+      "fromNumber": "+15550199"
+    }
+  }
+}
