@@ -1,9 +1,9 @@
 spring:
   datasource:
-    url: ${DATABASE_URL} # Supplied securely via environment variables
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    username: ${DB_USER}
+    password: ${DB_PASS}
     hikari:
+      jdbc-url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME}
       maximum-pool-size: 50
       minimum-idle: 10
       idle-timeout: 30000
