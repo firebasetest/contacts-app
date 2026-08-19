@@ -14,6 +14,9 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
 
 # Strict production logging configurations
 logging:
@@ -21,6 +24,9 @@ logging:
     root: INFO
     com.mycompany.contact_app: INFO
     org.hibernate: WARN
+    org.springframework.boot.actuate: DEBUG
+    org.springframework.boot.actuate.endpoint.web: DEBUG
+    org.springframework.boot.actuate.health: DEBUG
 
 server:
   error:
