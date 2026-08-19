@@ -1,5 +1,0 @@
-com\mycompany\contact_app\controller\ContactControllerTest.class
-com\mycompany\contact_app\config\TestSecurityConfig.class
-com\mycompany\contact_app\controller\OutboundCallControllerIT.class
-com\mycompany\contact_app\ContactAppApplicationTests.class
-com\mycompany\contact_app\service\ContactServiceTest.class
