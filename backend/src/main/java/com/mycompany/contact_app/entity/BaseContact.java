@@ -39,6 +39,10 @@ public abstract class BaseContact extends BaseEntity {
     @Column(name = "external_user_id")
     private String externalUserId;
 
+    // Source of the contact (e.g., import source or system identifier). Kept nullable for legacy rows.
+    @Column(name = "source")
+    private String source;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 

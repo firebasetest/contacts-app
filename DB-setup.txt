@@ -1,0 +1,588 @@
+Below are ready-to-run psql commands (interactive or one-liners) to create the database/user if missing, grant the schema privileges required for tests, and set default privileges for future objects.
+
+Notes:
+
+Run these as the Postgres superuser (e.g., connect with psql -U postgres).
+Replace passwords or names if your environment uses different values.
+The DO blocks make the create steps idempotent (safe to re-run).
+Interactive (recommended)
+Open psql as the postgres superuser:
+psql -U postgres -h localhost -p 5432
+
+Then run the following SQL (paste all at once):
+
+-- Create database if it doesn't exist
+DO
+
+$$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'contacts_dev') THEN PERFORM dblink_exec('dbname=postgres', 'CREATE DATABASE contacts_dev'); END IF; END $$; -- Create role/user if it doesn't exist; set/update password DO $$
+
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'contacts_dev_user') THEN
+CREATE ROLE contacts_dev_user WITH LOGIN PASSWORD 'contacts_dev_password';
+ELSE
+ALTER ROLE contacts_dev_user WITH PASSWORD 'contacts_dev_password';
+END IF;
+END
+$$;
+
+-- Allow connection and basic privileges on the database
+GRANT CONNECT ON DATABASE contacts_dev TO contacts_dev_user;
+
+-- Switch to the new database
+\c contacts_dev
+
+-- Grant USAGE and CREATE on the public schema so the user can create objects
+GRANT USAGE ON SCHEMA public TO contacts_dev_user;
+GRANT CREATE ON SCHEMA public TO contacts_dev_user;
+
+-- If tables already exist and you want this user to access them:
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO contacts_dev_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO contacts_dev_user;
+
+-- Ensure future objects created in schema public grant appropriate privileges automatically
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO contacts_dev_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO contacts_dev_user;
+
+One-line (non-interactive) examples
+Create DB (if missing) and user, then grant privileges (run from a shell as the postgres user):
+psql -U postgres -h localhost -p 5432 -v ON_ERROR_STOP=1 -c "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname='contacts_dev') THEN CREATE DATABASE contacts_dev; END IF; END $$;"
+
+psql -U postgres -h localhost -p 5432 -v ON_ERROR_STOP=1 -c "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='contacts_dev_user') THEN CREATE ROLE contacts_dev_user WITH LOGIN PASSWORD 'contacts_dev_password'; ELSE ALTER ROLE contacts_dev_user WITH PASSWORD 'contacts_dev_password'; END IF; END $$;"
+
+psql -U postgres -h localhost -p 5432 -d contacts_dev -v ON_ERROR_STOP=1 -c "GRANT USAGE ON SCHEMA public TO contacts_dev_user; GRANT CREATE ON SCHEMA public TO contacts_dev_user; GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO contacts_dev_user; GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO contacts_dev_user; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO contacts_dev_user; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO contacts_dev_user;"
+
+Verify access (as the application/test user)
+Quick check that the user can connect and run a simple query:
+psql -U contacts_dev_user -h localhost -p 5432 -d contacts_dev -c "SELECT current_user, version();"
+
+If this returns without error, the user can connect. Next, run the tests (from the repository):
+
+mvn -DDB_USER=contacts_dev_user -DDB_PASS=contacts_dev_password -DDB_NAME=contacts_dev test
+
+Optional: If you prefer the database to be owned by the user (so migrations can run without extra grants), as superuser run:
+ALTER DATABASE contacts_dev OWNER TO contacts_dev_user;
+
+Caveats & recommendations
+
+Granting CREATE on schema public gives the user ability to create/drop tables in that schema — appropriate for test environments but not for production. For CI, using an ephemeral database or H2 in-memory is safer.
+If you manage Postgres via Docker for tests, consider starting a container where the DB and user are created automatically (many CI setups do this).
+If you want, I can produce a small Docker Compose snippet that starts Postgres with the proper DB/user for running tests.
+Would you like the Docker Compose snippet, or any help running these commands?
+
+
+mvn -B -DDB_USER=contacts_dev_user -DDB_PASS=contacts_dev_password -DDB_NAME=contacts_dev -DskipTests=false test
+
+
+
+
+
+
+
+
+Got it — here are exact psql commands ready to paste & run as the Postgres superuser (or a user with sufficient rights). They:
+
+create the contacts_dev database if missing,
+create or update the contacts_dev_user with the password,
+grant CONNECT/USAGE/CREATE on the DB/schema,
+grant table/sequence privileges on existing objects,
+set default privileges for future objects.
+Run these on the machine where Postgres is running (adjust -h/ -p if your server is remote or uses different host/port). These are safe to re-run (they check for existence and ALTER when needed).
+
+Create DB if missing:
+psql -U postgres -h localhost -p 5432 -v ON_ERROR_STOP=1 -c "DO
+𝐵
+𝐸
+𝐺
+𝐼
+𝑁
+𝐼
+𝐹
+𝑁
+𝑂
+𝑇
+𝐸
+𝑋
+𝐼
+𝑆
+𝑇
+𝑆
+(
+𝑆
+𝐸
+𝐿
+𝐸
+𝐶
+𝑇
+1
+𝐹
+𝑅
+𝑂
+𝑀
+𝑝
+𝑔
+𝑑
+𝑎
+𝑡
+𝑎
+𝑏
+𝑎
+𝑠
+𝑒
+𝑊
+𝐻
+𝐸
+𝑅
+𝐸
+𝑑
+𝑎
+𝑡
+𝑛
+𝑎
+𝑚
+𝑒
+=
+′
+𝑐
+𝑜
+𝑛
+𝑡
+𝑎
+𝑐
+𝑡
+𝑠
+𝑑
+𝑒
+𝑣
+′
+)
+𝑇
+𝐻
+𝐸
+𝑁
+𝐶
+𝑅
+𝐸
+𝐴
+𝑇
+𝐸
+𝐷
+𝐴
+𝑇
+𝐴
+𝐵
+𝐴
+𝑆
+𝐸
+𝑐
+𝑜
+𝑛
+𝑡
+𝑎
+𝑐
+𝑡
+𝑠
+𝑑
+𝑒
+𝑣
+;
+𝐸
+𝑁
+𝐷
+𝐼
+𝐹
+;
+𝐸
+𝑁
+𝐷
+BEGINIFNOTEXISTS(SELECT1FROMpg 
+d
+​
+ atabaseWHEREdatname= 
+′
+ contacts 
+d
+​
+ ev 
+′
+ )THENCREATEDATABASEcontacts 
+d
+​
+ ev;ENDIF;END
+;"
+
+Create or update the role with password:
+psql -U postgres -h localhost -p 5432 -v ON_ERROR_STOP=1 -c "DO
+𝐵
+𝐸
+𝐺
+𝐼
+𝑁
+𝐼
+𝐹
+𝑁
+𝑂
+𝑇
+𝐸
+𝑋
+𝐼
+𝑆
+𝑇
+𝑆
+(
+𝑆
+𝐸
+𝐿
+𝐸
+𝐶
+𝑇
+1
+𝐹
+𝑅
+𝑂
+𝑀
+𝑝
+𝑔
+𝑟
+𝑜
+𝑙
+𝑒
+𝑠
+𝑊
+𝐻
+𝐸
+𝑅
+𝐸
+𝑟
+𝑜
+𝑙
+𝑛
+𝑎
+𝑚
+𝑒
+=
+′
+𝑐
+𝑜
+𝑛
+𝑡
+𝑎
+𝑐
+𝑡
+𝑠
+𝑑
+𝑒
+𝑣
+𝑢
+𝑠
+𝑒
+𝑟
+′
+)
+𝑇
+𝐻
+𝐸
+𝑁
+𝐶
+𝑅
+𝐸
+𝐴
+𝑇
+𝐸
+𝑅
+𝑂
+𝐿
+𝐸
+𝑐
+𝑜
+𝑛
+𝑡
+𝑎
+𝑐
+𝑡
+𝑠
+𝑑
+𝑒
+𝑣
+𝑢
+𝑠
+𝑒
+𝑟
+𝐿
+𝑂
+𝐺
+𝐼
+𝑁
+𝑃
+𝐴
+𝑆
+𝑆
+𝑊
+𝑂
+𝑅
+𝐷
+′
+𝑐
+𝑜
+𝑛
+𝑡
+𝑎
+𝑐
+𝑡
+𝑠
+𝑑
+𝑒
+𝑣
+𝑝
+𝑎
+𝑠
+𝑠
+𝑤
+𝑜
+𝑟
+𝑑
+′
+;
+𝐸
+𝐿
+𝑆
+𝐸
+𝐴
+𝐿
+𝑇
+𝐸
+𝑅
+𝑅
+𝑂
+𝐿
+𝐸
+𝑐
+𝑜
+𝑛
+𝑡
+𝑎
+𝑐
+𝑡
+𝑠
+𝑑
+𝑒
+𝑣
+𝑢
+𝑠
+𝑒
+𝑟
+𝑊
+𝐼
+𝑇
+𝐻
+𝑃
+𝐴
+𝑆
+𝑆
+𝑊
+𝑂
+𝑅
+𝐷
+′
+𝑐
+𝑜
+𝑛
+𝑡
+𝑎
+𝑐
+𝑡
+𝑠
+𝑑
+𝑒
+𝑣
+𝑝
+𝑎
+𝑠
+𝑠
+𝑤
+𝑜
+𝑟
+𝑑
+′
+;
+𝐸
+𝑁
+𝐷
+𝐼
+𝐹
+;
+𝐸
+𝑁
+𝐷
+BEGINIFNOTEXISTS(SELECT1FROMpg 
+r
+​
+ olesWHERErolname= 
+′
+ contacts 
+d
+​
+ ev 
+u
+​
+ ser 
+′
+ )THENCREATEROLEcontacts 
+d
+​
+ ev 
+u
+​
+ serLOGINPASSWORD 
+′
+ contacts 
+d
+​
+ ev 
+p
+​
+ assword 
+′
+ ;ELSEALTERROLEcontacts 
+d
+​
+ ev 
+u
+​
+ serWITHPASSWORD 
+′
+ contacts 
+d
+​
+ ev 
+p
+​
+ assword 
+′
+ ;ENDIF;END
+;"
+
+Grant CONNECT on DB (optional if you used the DO block above, but safe):
+psql -U postgres -h localhost -p 5432 -v ON_ERROR_STOP=1 -c "GRANT CONNECT ON DATABASE contacts_dev TO contacts_dev_user;"
+
+Grant schema privileges and allow creating objects in public schema:
+psql -U postgres -h localhost -p 5432 -d contacts_dev -v ON_ERROR_STOP=1 -c "GRANT USAGE ON SCHEMA public TO contacts_dev_user;"
+psql -U postgres -h localhost -p 5432 -d contacts_dev -v ON_ERROR_STOP=1 -c "GRANT CREATE ON SCHEMA public TO contacts_dev_user;"
+
+Grant privileges on existing tables and sequences (if any objects already exist):
+psql -U postgres -h localhost -p 5432 -d contacts_dev -v ON_ERROR_STOP=1 -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO contacts_dev_user;"
+psql -U postgres -h localhost -p 5432 -d contacts_dev -v ON_ERROR_STOP=1 -c "GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO contacts_dev_user;"
+
+Set default privileges so future tables/sequences are usable by the role:
+psql -U postgres -h localhost -p 5432 -d contacts_dev -v ON_ERROR_STOP=1 -c "ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO contacts_dev_user;"
+psql -U postgres -h localhost -p 5432 -d contacts_dev -v ON_ERROR_STOP=1 -c "ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO contacts_dev_user;"
+
+Notes and alternatives:
+
+If your DB owner is not postgres (e.g., you created the DB as contacts_dev_user previously), change the FOR ROLE clause in ALTER DEFAULT PRIVILEGES to the role that creates objects (or run ALTER DEFAULT PRIVILEGES as that role).
+If you prefer to run the few commands interactively inside psql, omit the -c and run them one by one in a psql session.
+If you want a single script file, save the above commands to create_db_and_grants.sql and run: psql -U postgres -f create_db_and_grants.sql
+Next steps:
+
+Run those commands locally, then tell me when done and I’ll re-run mvn test here (or you can run mvn locally with:
+mvn -Dspring.profiles.active=dev -DDB_USER=contacts_dev_user -DDB_PASS=contacts_dev_password -DDB_NAME=contacts_dev test
+
+
+
+
+-- create_db_and_grants.sql
+DO $$
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'contacts_dev') THEN
+CREATE DATABASE contacts_dev;
+END IF;
+END
+$$;
+
+DO $$
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'contacts_dev_user') THEN
+CREATE ROLE contacts_dev_user LOGIN PASSWORD 'contacts_dev_password';
+ELSE
+ALTER ROLE contacts_dev_user WITH PASSWORD 'contacts_dev_password';
+END IF;
+END
+$$;
+
+-- Grant DB-level connect
+GRANT CONNECT ON DATABASE contacts_dev TO contacts_dev_user;
+
+-- The rest runs against the contacts_dev DB
+\connect contacts_dev
+
+-- Allow using and creating objects in the public schema
+GRANT USAGE ON SCHEMA public TO contacts_dev_user;
+GRANT CREATE ON SCHEMA public TO contacts_dev_user;
+
+-- Privileges on any existing tables/sequences
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO contacts_dev_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO contacts_dev_user;
+
+-- Default privileges for future objects created by the DB owner (adjust role if needed)
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO contacts_dev_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+GRANT USAGE, SELECT ON SEQUENCES TO contacts_dev_user;
+
+Run the script (example; use postgres superuser or equivalent):
+psql -U postgres -h localhost -p 5432 -v ON_ERROR_STOP=1 -f create_db_and_grants.sql
+If you prefer single-line psql commands (bash / Linux / macOS)
+Copy these lines and run them in your shell — they are the same steps as above:
+psql -U postgres -h localhost -p 5432 -v ON_ERROR_STOP=1 -c "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname='contacts_dev') THEN CREATE DATABASE contacts_dev; END IF; END $$;"
+psql -U postgres -h localhost -p 5432 -v ON_ERROR_STOP=1 -c "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='contacts_dev_user') THEN CREATE ROLE contacts_dev_user LOGIN PASSWORD 'contacts_dev_password'; ELSE ALTER ROLE contacts_dev_user WITH PASSWORD 'contacts_dev_password'; END IF; END $$;"
+psql -U postgres -h localhost -p 5432 -d contacts_dev -v ON_ERROR_STOP=1 -c "GRANT CONNECT ON DATABASE contacts_dev TO contacts_dev_user;"
+psql -U postgres -h localhost -p 5432 -d contacts_dev -v ON_ERROR_STOP=1 -c "GRANT USAGE ON SCHEMA public TO contacts_dev_user;"
+psql -U postgres -h localhost -p 5432 -d contacts_dev -v ON_ERROR_STOP=1 -c "GRANT CREATE ON SCHEMA public TO contacts_dev_user;"
+psql -U postgres -h localhost -p 5432 -d contacts_dev -v ON_ERROR_STOP=1 -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO contacts_dev_user;"
+psql -U postgres -h localhost -p 5432 -d contacts_dev -v ON_ERROR_STOP=1 -c "GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO contacts_dev_user;"
+psql -U postgres -h localhost -p 5432 -d contacts_dev -v ON_ERROR_STOP=1 -c "ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO contacts_dev_user;"
+psql -U postgres -h localhost -p 5432 -d contacts_dev -v ON_ERROR_STOP=1 -c "ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO contacts_dev_user;"
+
+PowerShell-friendly (create file then run)
+Open PowerShell, paste these lines (they write the SQL file and run psql):
+@'
+DO $$
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'contacts_dev') THEN
+CREATE DATABASE contacts_dev;
+END IF;
+END
+$$;
+
+DO $$
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'contacts_dev_user') THEN
+CREATE ROLE contacts_dev_user LOGIN PASSWORD 'contacts_dev_password';
+ELSE
+ALTER ROLE contacts_dev_user WITH PASSWORD 'contacts_dev_password';
+END IF;
+END
+$$;
+
+GRANT CONNECT ON DATABASE contacts_dev TO contacts_dev_user;
+\connect contacts_dev
+GRANT USAGE ON SCHEMA public TO contacts_dev_user;
+GRANT CREATE ON SCHEMA public TO contacts_dev_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO contacts_dev_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO contacts_dev_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO contacts_dev_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO contacts_dev_user;
+'@ > .\create_db_and_grants.sql
+
+psql -U postgres -h localhost -p 5432 -v ON_ERROR_STOP=1 -f .\create_db_and_grants.sql
+
+Notes
+
+Replace contacts_dev_password if you want a different password. If you do, update application-dev.yml accordingly.
+If your Postgres superuser is not 'postgres' or runs on a different host/port, change the -U, -h, -p values.
+If objects in the DB are owned by a role other than postgres, change the ALTER DEFAULT PRIVILEGES FOR ROLE postgres ... lines to the role that creates objects (or run those ALTER DEFAULT PRIVILEGES as the object-creating role).
+The script is safe to re-run (it uses IF NOT EXISTS and ALTER ROLE to update password).
+Next?
+
+
+
+

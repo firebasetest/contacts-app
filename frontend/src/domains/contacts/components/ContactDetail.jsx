@@ -139,23 +139,34 @@ export default function ContactDetail({ contactId, onBack }) {
     e.preventDefault();
     setIsSaving(true);
     try {
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        phoneNumber: formData.phoneNumber,
+        status: 'ACTIVE',
+        customAttributes: formData.customAttributes || {}
+      };
+
       if (isCreateMode) {
-        // await axiosClient.post('/contacts', formData);
-        await new Promise(resolve => setTimeout(resolve, 800));
-        toast.success("Identity record injected into directory space.");
+        await axiosClient.post('/contacts', payload);
+        toast.success('Identity record injected into directory space.');
         onBack();
       } else {
-        // await axiosClient.put(`/contacts/${contactId}`, formData);
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
+        const { data } = await axiosClient.put(`/contacts/${contactId}`, {
+          ...payload,
+          id: contactId,
+          systemRole: formData.systemRole,
+          source: formData.source
+        });
+
         if (profile) {
-          Object.assign(profile, formData);
+          Object.assign(profile, data);
         }
         setIsEditing(false);
-        toast.success("Profile records mutated successfully.");
+        toast.success('Profile records mutated successfully.');
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Data boundary validation failure.");
+      toast.error(err.response?.data?.message || 'Data boundary validation failure.');
     } finally {
       setIsSaving(false);
     }

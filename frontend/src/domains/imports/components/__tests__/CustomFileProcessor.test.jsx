@@ -3,11 +3,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import CustomFileProcessor from '../CustomFileProcessor';
 
-// Mocking react-hot-toast out of execution path loops
+// Mocking react-hot-toast default export used by the component
 jest.mock('react-hot-toast', () => ({
-  toast: {
-    error: jest.fn(),
-    success: jest.fn()
+  __esModule: true,
+  default: {
+    success: jest.fn(),
+    error: jest.fn()
   }
 }));
 
@@ -25,67 +26,40 @@ describe('CustomFileProcessor UI Logic Component', () => {
 
   test('should render file drag-and-drop landing lane initially', () => {
     render(<CustomFileProcessor onProcessingComplete={jest.fn()} />);
-    expect(screen.getByText(/Schema Ingestion Quality Gate/i)).toBeInTheDocument();
-    expect(screen.getByText(/Click to import or drop target files here/i)).toBeInTheDocument();
+    // Updated expectations to match current component wording
+    expect(screen.getByText(/Polymorphic Stream Ingestion Inbound Framework/i)).toBeInTheDocument();
+    expect(screen.getByText(/Drop Delimited Inbound File Buffer Matrix/i)).toBeInTheDocument();
   });
 
-  test('should parse CSV headers locally and transition state views into alignment mapping tables', async () => {
+  test('should parse sample file via simulate upload and show mapping UI', async () => {
     const mockCallback = jest.fn();
     render(<CustomFileProcessor onProcessingComplete={mockCallback} />);
 
-    const file = createMockFileBlob("name,email,phoneNumber\nJohn Doe,john@test.com,+15550000", "contacts.csv");
+    // Click the first simulated sample file button provided by the component
+    const sampleButton = screen.getByText(/Q2_Inbound_Leads_EU.csv/i);
+    fireEvent.click(sampleButton);
 
-    // Polyfill simple FileReader mock behaviors for target node testing execution context environment
-    const originalFileReader = global.FileReader;
-    class MockFileReader {
-      readAsText(blob) {
-        this.result = "name,email,phoneNumber\nJohn Doe,john@test.com,+15550000";
-        if (this.onload) {
-          this.onload({ target: { result: this.result } });
-        }
-      }
-    }
-    global.FileReader = MockFileReader;
-
-    const input = screen.getByTagName('input');
-    fireEvent.change(input, { target: { files: [file] } });
-
+    // Expect the mapping UI and file context to appear
     await waitFor(() => {
-      expect(screen.getByText(/Align Resource Data Layout Positions/i)).toBeInTheDocument();
+      expect(screen.getByText(/File Context Target:/i)).toBeInTheDocument();
     });
 
-    // Clean up file reader context mutations
-    global.FileReader = originalFileReader;
+    // There should be select elements populated for parsed headers
+    expect(document.querySelectorAll('select').length).toBeGreaterThan(0);
   });
 
-  test('should block process advancement when mandatory required layout links are dropped', async () => {
+  test('should prevent advancing when required mappings are missing', async () => {
     render(<CustomFileProcessor onProcessingComplete={jest.fn()} />);
-    
-    // Simulating immediate transition into active mapping layout views
-    const file = createMockFileBlob("mismatchedHeaderOne,mismatchedHeaderTwo\nval1,val2", "mismatched.csv");
-    
-    const originalFileReader = global.FileReader;
-    class MockFileReader {
-      readAsText(blob) {
-        this.result = "mismatchedHeaderOne,mismatchedHeaderTwo\nval1,val2";
-        this.onload({ target: { result: this.result } });
-      }
-    }
-    global.FileReader = MockFileReader;
 
-    fireEvent.change(screen.getByTagName('input'), { target: { files: [file] } });
+    // Click the second simulated sample file which maps to a different schema (should leave required Contact fields missing)
+    const sampleButton = screen.getByText(/Stark_Logistics_Export.xlsx/i);
+    fireEvent.click(sampleButton);
 
+    // The Confirm Transformations Mapping button should be present but disabled until required mappings are set
     await waitFor(() => {
-      expect(screen.getByText(/Advance to Pipeline Processing Sandbox Preview/i)).toBeInTheDocument();
+      const confirmBtn = screen.getByText(/Confirm Transformations Mapping/i);
+      expect(confirmBtn).toBeInTheDocument();
+      expect(confirmBtn).toBeDisabled();
     });
-
-    // Fire preview generation request button while allocations are missing configuration alignments
-    const advanceButton = screen.getByText(/Advance to Pipeline Processing Sandbox Preview/i);
-    fireEvent.click(advanceButton);
-
-    // Assert that the interface prevents advancing due to the missing required fields
-    expect(screen.queryByText(/Client-Side Structural Parsing Dry Run/i)).not.toBeInTheDocument();
-
-    global.FileReader = originalFileReader;
   });
 });

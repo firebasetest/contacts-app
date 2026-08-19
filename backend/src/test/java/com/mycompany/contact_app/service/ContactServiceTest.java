@@ -98,16 +98,16 @@ public class ContactServiceTest {
 
         List<ContactHistory> historyList = Collections.singletonList(mockHistory);
 
-        // Connect properly with the find method signature mapping requirements
-        when(historyRepository.findByEntityIdOrderByVersionDesc(contactId)).thenReturn(historyList);
+        // Connect properly with the existing repository method signature
+        when(historyRepository.findByContactIdOrderByValidFromDesc(contactId)).thenReturn(historyList);
 
-        List<ContactHistory> result = historyRepository.findByEntityIdOrderByVersionDesc(contactId);
+        List<ContactHistory> result = historyRepository.findByContactIdOrderByValidFromDesc(contactId);
 
         assertFalse(result.isEmpty());
         assertEquals(historyId, result.get(0).getHistoryId());
         assertEquals(1, result.get(0).getVersion());
         assertEquals("UPDATE", result.get(0).getCaptureType());
-        verify(historyRepository, times(1)).findByEntityIdOrderByVersionDesc(contactId);
+        verify(historyRepository, times(1)).findByContactIdOrderByValidFromDesc(contactId);
     }
 
     @Test
