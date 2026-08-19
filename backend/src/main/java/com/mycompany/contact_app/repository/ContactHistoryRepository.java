@@ -17,7 +17,6 @@ public interface ContactHistoryRepository extends JpaRepository<ContactHistory, 
 
         List<ContactHistory> findByContactIdOrderByValidFromDesc(UUID contactId);
 
-        List<ContactHistory> findByEntityIdOrderByVersionDesc(UUID contactId);
 
         /**
          * Overwrites all historical PII snapshots for a given contact record.
