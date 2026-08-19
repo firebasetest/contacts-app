@@ -1,8 +1,9 @@
 package com.mycompany.contact_app.controller;
 
-import com.mycompany.contact_app.filter.TenantContextFilter;
+//import com.mycompany.contact_app.filter.TenantContextFilter;
 import com.mycompany.contact_app.entity.TenantSettings;
 import com.mycompany.contact_app.exception.MissingTenantClaimException;
+import com.mycompany.contact_app.security.TenantContext;
 import jakarta.persistence.EntityManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,7 @@ public class TenantSettingsController {
     public ResponseEntity<Map<String, Object>> getActiveClientConfig() {
         // CRITICAL FIX: Validate tenant context first to ensure robustness against
         // null/unauthenticated users.
-        String tenantIdString = com.mycompany.contact_app.filter.TenantContextFilter.CURRENT_TENANT.get();
+        String tenantIdString = TenantContext.getCurrentTenant();
         if (tenantIdString == null || tenantIdString.isBlank()) {
             throw new MissingTenantClaimException(
                     "Cannot retrieve client configuration: Tenant context is missing or unset.");

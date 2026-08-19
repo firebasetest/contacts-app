@@ -1,8 +1,0 @@
-databaseChangeLog:
-  - changeSet:
-      id: minimal-noop-0001
-      author: copilot
-      changes:
-        - sql: "SELECT 1"
-      rollback:
-        - sql: "SELECT 1"

@@ -26,7 +26,7 @@ import java.sql.Statement;
 public class TenantContextFilter extends OncePerRequestFilter {
 
     public static final String TENANT_HEADER = "X-BU-ID";
-    public static final ThreadLocal<String> CURRENT_TENANT = new ThreadLocal<>();
+    //public static final ThreadLocal<String> CURRENT_TENANT = new ThreadLocal<>();
 
     /*
      * 

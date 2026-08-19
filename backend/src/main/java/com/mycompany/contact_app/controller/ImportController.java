@@ -1,5 +1,6 @@
 package com.mycompany.contact_app.controller;
 
+import com.mycompany.contact_app.security.TenantContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +15,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 
-import com.mycompany.contact_app.filter.TenantContextFilter;
+//import com.mycompany.contact_app.filter.TenantContextFilter;
 import com.mycompany.contact_app.dto.ImportJobDTO;
 import com.mycompany.contact_app.dto.ImportSummaryReportDto;
 import com.mycompany.contact_app.entity.ImportErrorLog;
@@ -74,7 +75,7 @@ public class ImportController {
         ImportJob job = new ImportJob();
         job.setJobId(jobId);
         job.setStatus("PENDING");
-        job.setBusinessUnitId(UUID.fromString(TenantContextFilter.CURRENT_TENANT.get()));
+        job.setBusinessUnitId(UUID.fromString(TenantContext.getCurrentTenant()));
         job.setTotalRecords(totalRecords);
         job.setProcessedRecords(0);
         jobRepository.save(job);

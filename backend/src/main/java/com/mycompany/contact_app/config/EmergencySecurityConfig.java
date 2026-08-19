@@ -1,5 +1,6 @@
 package com.mycompany.contact_app.config;
 
+import com.mycompany.contact_app.security.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +19,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.mycompany.contact_app.filter.TenantContextFilter;
+//import com.mycompany.contact_app.filter.TenantContextFilter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -90,14 +91,14 @@ public class EmergencySecurityConfig {
                 // Populate Multi-Tenant context manually to satisfy Postgres RLS matching
                 // requirements
                 if (targetTenantHeader != null && !targetTenantHeader.isBlank()) {
-                    TenantContextFilter.CURRENT_TENANT.set(targetTenantHeader);
+                    TenantContext.setCurrentTenant(targetTenantHeader);
                 }
 
                 try {
                     filterChain.doFilter(request, response);
                 } finally {
                     // Always clear context boundaries at thread termination
-                    TenantContextFilter.CURRENT_TENANT.remove();
+                    TenantContext.clear();
                 }
             } else {
                 log.warn("WARNING: Unauthorized attempt to access Break-Glass Emergency endpoints from IP: {}",
