@@ -124,11 +124,7 @@
         </dependency>
 
         <!-- CSV Export -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-csv</artifactId>
-            <version>1.10.0</version>
-        </dependency>
+        <!-- CSV Export handled by single commons-csv declaration above -->
 
         <!-- PDF Export -->
         <dependency>
