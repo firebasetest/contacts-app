@@ -1,6 +1,7 @@
 package com.mycompany.contact_app.config;
 
-import com.mycompany.contact_app.filter.TenantContextFilter;
+//import com.mycompany.contact_app.filter.TenantContextFilter;
+import com.mycompany.contact_app.security.TenantContext;
 import com.mycompany.contact_app.service.IdentityProvisioningService;
 import com.mycompany.contact_app.exception.MissingTenantClaimException;
 
@@ -33,7 +34,7 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, Abstract
         // you can extract it here and seed your ThreadLocal context automatically.
         if (jwt.hasClaim("business_unit_id")) {
             String tokenBuId = jwt.getClaimAsString("business_unit_id");
-            TenantContextFilter.CURRENT_TENANT.set(tokenBuId);
+            TenantContext.setCurrentTenant(tokenBuId);
         } else {
             // CRITICAL FIX: Throw exception if tenant context is missing from JWT
             throw new MissingTenantClaimException("JWT must contain the 'business_unit_id' claim for multi-tenant security enforcement.");
