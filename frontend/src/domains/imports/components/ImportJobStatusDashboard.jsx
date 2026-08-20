@@ -4,11 +4,14 @@ import { toast } from 'react-hot-toast';
 import { RefreshCw, CheckCircle2, AlertTriangle, FileText, Layers } from 'lucide-react';
 import CustomFileProcessor from './CustomFileProcessor';
 
+// ==========================================
+// 3. Consolidated Main Dashboard Component
+// ==========================================
 export default function ImportJobStatusDashboard() {
   const [jobs, setJobs] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Generates safety request headers supplying authorization tokens and the tenant identity context
+  // Headers supplying authorization and business tenant unit identity
   const getHeaders = () => {
     const businessUnitId = localStorage.getItem('active_bu_id') || '00000000-0000-0000-0000-000000000000';
     const token = localStorage.getItem('auth_token');
@@ -18,7 +21,7 @@ export default function ImportJobStatusDashboard() {
     };
   };
 
-  // Queries the backend repository queue for processing jobs corresponding to the current tenant context
+  // Queries backend worker queue for processing jobs
   const fetchJobs = useCallback(async (showIndicator = false) => {
     if (showIndicator) setRefreshing(true);
     try {
@@ -31,17 +34,19 @@ export default function ImportJobStatusDashboard() {
     }
   }, []);
 
-  // Triggers the initial query map on initialization and establishes a background pooling interval
+  // Set up initialization query and automatic 5-second polling loop
   useEffect(() => {
     fetchJobs();
     const interval = setInterval(() => fetchJobs(false), 5000);
     return () => clearInterval(interval);
   }, [fetchJobs]);
 
-  // Processes the verified file layout returned from the local client quality gate components
+  // Handles payload output from CustomFileProcessor step wizard
   const handleInboundProcessorPayload = async ({ file, headerMappings }) => {
     const formData = new FormData();
-    formData.append('file', file);
+    if (file) {
+      formData.append('file', file);
+    }
     formData.append('mappings', JSON.stringify(headerMappings));
 
     try {
@@ -52,16 +57,16 @@ export default function ImportJobStatusDashboard() {
         }
       });
       toast.success('Asynchronous stream processor successfully provisioned!');
-      fetchJobs(false); // Instantly refresh status records without waiting for the next polling cycle
+      fetchJobs(false);
     } catch (err) {
       toast.error(err.response?.data?.message || 'File parsing ingest handshake failed on system gate.');
+      throw err;
     }
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-white space-y-8">
-      
-      {/* Upper Dashboard Dashboard Meta Header */}
+      {/* Header Bar */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-5">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -81,15 +86,14 @@ export default function ImportJobStatusDashboard() {
         </button>
       </div>
 
-      {/* Main Structural Layout Grid Matrix */}
+      {/* Grid Layout Matrix */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        
-        {/* Left Column Container: Houses the client-side pre-flight file verification logic */}
+        {/* Left Column Container: Client-side file verification wizard */}
         <div className="lg:col-span-1">
           <CustomFileProcessor onProcessingComplete={handleInboundProcessorPayload} />
         </div>
 
-        {/* Right Column Container: Renders dynamic background thread queue items */}
+        {/* Right Column Container: Active background thread queues */}
         <div className="lg:col-span-2 space-y-4">
           <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase">Active Core Thread Allocations</h3>
           
@@ -126,7 +130,7 @@ export default function ImportJobStatusDashboard() {
                       </div>
                     </div>
 
-                    {/* Progress Metrics Representation Layout */}
+                    {/* Progress Metrics Representation */}
                     <div className="space-y-1">
                       <div className="flex justify-between text-[11px] font-mono text-slate-400">
                         <span>Ingested Rows: {job.processedRows} / {job.totalRows || 'Calculating...'}</span>
@@ -143,7 +147,7 @@ export default function ImportJobStatusDashboard() {
                       </div>
                     </div>
 
-                    {/* Exception Stack trace tracking panel layout */}
+                    {/* Exception Stack Trace Tracking Panel */}
                     {job.errorMessage && (
                       <div className="bg-red-950/20 border border-red-900/30 text-red-400 p-2.5 rounded-lg font-mono text-[11px] break-all">
                         <span className="font-bold block uppercase text-[9px] text-red-500 tracking-wide mb-0.5">Execution Log Interruption:</span>
@@ -156,7 +160,6 @@ export default function ImportJobStatusDashboard() {
             </div>
           )}
         </div>
-
       </div>
     </div>
   );

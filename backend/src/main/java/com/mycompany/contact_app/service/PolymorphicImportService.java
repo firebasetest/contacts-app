@@ -1,6 +1,7 @@
 package com.mycompany.contact_app.service;
 
 import com.mycompany.contact_app.service.MetadataRegistry;
+import com.monitorjbl.xlsx.StreamingReader;
 import com.mycompany.contact_app.dto.ImportJobDTO;
 import com.mycompany.contact_app.dto.ImportRowDto;
 import com.mycompany.contact_app.entity.*;
@@ -269,6 +270,53 @@ public class PolymorphicImportService implements ImportService {
             // Clear ThreadLocal tenant context to avoid memory/security leaks across
             // re-used threads
             TenantContext.clear();
+        }
+    }
+
+    /**
+     * Helper to compute file size thresholds safely depending on document metadata
+     * characteristics.
+     */
+    public int calculateRecordCount(Path filePath, String filename) throws IOException {
+        String lowerName = filename.toLowerCase();
+
+        if (lowerName.endsWith(".csv")) {
+            try (Stream<String> lines = Files.lines(filePath)) {
+                long lineCount = lines.count();
+                return lineCount > 1 ? (int) lineCount - 1 : 0; // Exclude header row
+            }
+        } else if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
+            return countExcelRowsStreaming(filePath);
+        } else {
+            throw new IllegalArgumentException("Unsupported file type. Supported formats: .csv, .xlsx, .xls");
+        }
+    }
+
+    private int countExcelRowsStreaming(Path filePath) throws IOException {
+        // Stream rows using a small memory buffer instead of reading the entire DOM
+        // into heap
+        try (InputStream is = Files.newInputStream(filePath);
+                Workbook workbook = StreamingReader.builder()
+                        .rowCacheSize(100)
+                        .bufferSize(4096)
+                        .open(is)) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+            int rowCount = 0;
+            for (var row : sheet) {
+                rowCount++;
+            }
+            return rowCount > 1 ? rowCount - 1 : 0; // Exclude header row
+        }
+    }
+
+    private void cleanupTempFile(Path path) {
+        if (path != null) {
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                log.warn("Failed to delete temporary staging file: {}", path, e);
+            }
         }
     }
 

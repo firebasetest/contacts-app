@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 import { 
   Upload, FileSpreadsheet, ArrowRight, CheckCircle2, AlertTriangle, 
-  RefreshCw, Layers, Database, ChevronRight, HelpCircle, Check, Play 
+  RefreshCw, Layers, Database, ChevronRight, HelpCircle, Check, Play, FileText 
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { Sequence, Step } from '../../../components/Sequence'; // Ensure path alignment with your project structure
+import axiosClient from '../../api/axiosClient';
 
-// 1. Polymorphic Target Schemas Registry Definition
+// ==========================================
+// 1. Target Schemas & Sample Mock Registries
+// ==========================================
 const POLYMORPHIC_TARGET_SCHEMAS = {
   Contact: {
     label: 'Contact Directory Entity',
@@ -20,31 +24,32 @@ const POLYMORPHIC_TARGET_SCHEMAS = {
   }
 };
 
-// Mock raw incoming spreadsheet configurations for simulation
 const MOCK_SAMPLE_FILES = [
   { name: 'Q2_Inbound_Leads_EU.csv', headers: ['Full Name', 'Email Address', 'Mobile Terminal', 'Service Tier Preference', 'ARR Estimate'] },
   { name: 'Stark_Logistics_Export.xlsx', headers: ['companyName', 'domain', 'industry vertical', 'SLA level', 'Annual Contract Value'] }
 ];
 
-export default function CustomFileProcessor({ onJobCreated }) {
-  // Processing Pipeline States
+// ==========================================
+// 2. Custom File Processor Component
+// ==========================================
+export function CustomFileProcessor({ onProcessingComplete }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [targetModel, setTargetModel] = useState('Contact');
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null); // File object or mock file object
   const [parsedHeaders, setParsedHeaders] = useState([]);
   const [columnMappings, setColumnMappings] = useState({});
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // 2. Automatch Heuristic String Comparison Engine
-  const executeAutoMatchHeuristics = (headers, model) => {
+  // Auto-match Heuristic String Comparison Engine
+  const executeAutoMatchHeuristics = useCallback((headers, model) => {
     const schema = POLYMORPHIC_TARGET_SCHEMAS[model];
+    if (!schema) return;
+    
     const allTargetFields = [...schema.requiredFields, ...schema.optionalFields];
     const initialMappings = {};
 
     headers.forEach(rawHeader => {
-      // Clean and sanitize string vectors for loose token comparison
       const sanitizedRaw = rawHeader.toLowerCase().replace(/[^a-z0-9]/g, '');
-      
       const exactOrFuzzyMatch = allTargetFields.find(targetField => {
         const sanitizedTarget = targetField.toLowerCase();
         return sanitizedRaw === sanitizedTarget || 
@@ -52,30 +57,51 @@ export default function CustomFileProcessor({ onJobCreated }) {
                sanitizedTarget.includes(sanitizedRaw);
       });
 
-      if (exactOrFuzzyMatch) {
-        initialMappings[rawHeader] = exactOrFuzzyMatch;
-      } else {
-        initialMappings[rawHeader] = ''; // Leave unassigned for explicit user interaction
-      }
+      initialMappings[rawHeader] = exactOrFuzzyMatch || '';
     });
 
     setColumnMappings(initialMappings);
-  };
+  }, []);
 
-  // Synchronize matches when the file context or destination target flips
+  // Synchronize heuristic auto-matches on state changes
   useEffect(() => {
-    if (selectedFile) {
+    if (selectedFile && parsedHeaders.length > 0) {
       executeAutoMatchHeuristics(parsedHeaders, targetModel);
     }
-  }, [targetModel, selectedFile, parsedHeaders]);
+  }, [targetModel, selectedFile, parsedHeaders, executeAutoMatchHeuristics]);
 
-  // Handle Mock file drop simulator injection
+  // Handle Mock File selection
   const handleSimulateUpload = (fileIndex) => {
     const targetFile = MOCK_SAMPLE_FILES[fileIndex];
-    setSelectedFile(targetFile.name);
+    // Create dummy File instance for payload compatibility
+    const mockFileObj = new File(["dummy content"], targetFile.name, { type: "text/csv" });
+    setSelectedFile(mockFileObj);
     setParsedHeaders(targetFile.headers);
     setCurrentStep(2);
     toast.success(`Parsed ${targetFile.headers.length} headers from ${targetFile.name}`);
+  };
+
+  // Handle Native Real File Input Selection
+  const handleNativeFileUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result || '';
+      const firstLine = text.split('\n')[0];
+      const headers = firstLine ? firstLine.split(',').map(h => h.trim().replace(/^["']|["']$/g, '')) : [];
+      
+      if (headers.length > 0) {
+        setParsedHeaders(headers);
+        setCurrentStep(2);
+        toast.success(`Parsed ${headers.length} headers from ${file.name}`);
+      } else {
+        toast.error("Could not parse valid headers from the selected file.");
+      }
+    };
+    reader.readAsText(file);
   };
 
   const handleMapChange = (rawHeader, targetField) => {
@@ -85,9 +111,10 @@ export default function CustomFileProcessor({ onJobCreated }) {
     }));
   };
 
-  // 3. Validation Matrix Guardrail
+  // Validation Matrix Guardrail
   const validateRequiredFields = () => {
     const schema = POLYMORPHIC_TARGET_SCHEMAS[targetModel];
+    if (!schema) return [];
     const mappedTargetFields = Object.values(columnMappings);
     return schema.requiredFields.filter(reqField => !mappedTargetFields.includes(reqField));
   };
@@ -95,25 +122,27 @@ export default function CustomFileProcessor({ onJobCreated }) {
   const missingRequiredFields = validateRequiredFields();
   const isMappingValid = missingRequiredFields.length === 0;
 
-  // 4. Dispatch Payload to Async Processing Worker Pool Pipeline
+  // Dispatch Payload to Processing Pipeline
   const handleDispatchPipeline = async () => {
     setIsProcessing(true);
     try {
-      // In production contexts, construct a form mapping payload out to your ingestion controller:
-      // const payload = { targetModel, columnMappings, filename: selectedFile };
-      // await axiosClient.post('/imports/jobs', payload);
+      if (onProcessingComplete) {
+        await onProcessingComplete({
+          file: selectedFile,
+          headerMappings: {
+            targetModel,
+            mappings: columnMappings
+          }
+        });
+      }
       
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      toast.success("Structural map accepted. Ingestion transaction dispatched to background workers.");
-      
-      if (onJobCreated) onJobCreated();
-      
-      // Reset State Machine
+      // Reset wizard state
       setCurrentStep(1);
       setSelectedFile(null);
+      setParsedHeaders([]);
       setColumnMappings({});
     } catch (err) {
-      toast.error("Pipeline failure: Could not allocate memory context to target worker threads.");
+      toast.error("Pipeline dispatch error: Ingest pipeline failed to process request.");
     } finally {
       setIsProcessing(false);
     }
@@ -121,8 +150,7 @@ export default function CustomFileProcessor({ onJobCreated }) {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 py-4 text-white">
-      
-      {/* Component Module Identification Header Block */}
+      {/* Header Block */}
       <div className="flex items-center justify-between border-b border-slate-900 pb-5">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-indigo-600/10 border border-indigo-500/20 rounded-xl flex items-center justify-center">
@@ -135,12 +163,11 @@ export default function CustomFileProcessor({ onJobCreated }) {
         </div>
       </div>
 
-      {/* Procedural Step Management Execution Container */}
+      {/* Procedural Step Management */}
       <Sequence>
         {/* Step 1: Destination Scope and Inbound Object Extraction */}
         <Step title="Establish Target Ingestion Sub-Type & Stream Drop" subtitle="Step 1 of 3">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-            
             {/* Target Sub-Type Switcher */}
             <div className="space-y-3 bg-slate-950 p-4 rounded-xl border border-slate-900">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
@@ -164,13 +191,19 @@ export default function CustomFileProcessor({ onJobCreated }) {
               </div>
             </div>
 
-            {/* Simulated File Injection Zone Container */}
-            <div className="md:col-span-2 border-2 border-dashed border-slate-800 hover:border-slate-700 bg-slate-900/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-colors group">
+            {/* File Drop & Simulation Container */}
+            <div className="md:col-span-2 border-2 border-dashed border-slate-800 hover:border-slate-700 bg-slate-900/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-colors group relative">
+              <input 
+                type="file" 
+                accept=".csv,.xlsx,.xls" 
+                onChange={handleNativeFileUpload} 
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+              />
               <Upload className="w-10 h-10 text-slate-600 group-hover:text-indigo-400 transition-colors mb-3" />
               <div className="text-xs font-semibold text-slate-300">Drop Delimited Inbound File Buffer Matrix</div>
-              <p className="text-[11px] text-slate-500 max-w-xs mx-auto mt-1">Accepts variable columns across UTF-8 text envelopes.</p>
+              <p className="text-[11px] text-slate-500 max-w-xs mx-auto mt-1">Click or drag UTF-8 delimited text files directly here.</p>
               
-              <div className="mt-5 w-full max-w-md bg-slate-950 p-3 rounded-xl border border-slate-900 text-left space-y-2">
+              <div className="mt-5 w-full max-w-md bg-slate-950 p-3 rounded-xl border border-slate-900 text-left space-y-2 z-20">
                 <div className="text-[10px] font-bold tracking-wider text-slate-500 uppercase px-1">Or Simulate Sample File Registry Uploads:</div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {MOCK_SAMPLE_FILES.map((file, idx) => (
@@ -185,11 +218,10 @@ export default function CustomFileProcessor({ onJobCreated }) {
                 </div>
               </div>
             </div>
-
           </div>
         </Step>
 
-        {/* Step 2: Interactive Mapping Dynamic Grid Component */}
+        {/* Step 2: Interactive Mapping Dynamic Grid */}
         <Step title="Align Extracted File Headers with System Schema Architecture" subtitle="Step 2 of 3">
           {currentStep < 2 ? (
             <div className="p-4 bg-slate-900/30 text-slate-500 font-mono text-xs italic rounded-xl border border-slate-900 mt-4">
@@ -197,13 +229,11 @@ export default function CustomFileProcessor({ onJobCreated }) {
             </div>
           ) : (
             <div className="space-y-4 mt-4 animate-fadeIn">
-              
-              {/* Informational Diagnostic Mapping Info Bar */}
               <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
                 <div className="flex items-center gap-2">
                   <Layers className="w-4 h-4 text-indigo-400" />
                   <span className="text-xs font-semibold text-slate-300">
-                    File Context Target: <span className="text-mono font-mono text-indigo-300 bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-900/50">{selectedFile}</span>
+                    File Context Target: <span className="text-mono font-mono text-indigo-300 bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-900/50">{selectedFile?.name}</span>
                   </span>
                 </div>
                 
@@ -213,12 +243,12 @@ export default function CustomFileProcessor({ onJobCreated }) {
                   </div>
                 ) : (
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-400 bg-amber-950/20 border border-amber-900/40 px-3 py-1 rounded-full">
-                    <AlertTriangle className="w-3.5 h-3.5" /> Missing Schema Mapping Injections: {missingRequiredFields.join(', ')}
+                    <AlertTriangle className="w-3.5 h-3.5" /> Missing Required Fields: {missingRequiredFields.join(', ')}
                   </div>
                 )}
               </div>
 
-              {/* High-Fidelity Column Matching Interface Grid Layout Matrix */}
+              {/* Column Matching Interface Grid Layout Matrix */}
               <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-inner">
                 <div className="grid grid-cols-12 gap-4 px-4 py-2.5 bg-slate-950 border-b border-slate-800 text-[10px] uppercase font-bold tracking-wider font-mono text-slate-500">
                   <div className="col-span-5">Raw Uploaded File Field Coordinates</div>
@@ -233,14 +263,11 @@ export default function CustomFileProcessor({ onJobCreated }) {
 
                     return (
                       <div key={rawHeader} className="grid grid-cols-12 items-center gap-4 px-4 py-3 hover:bg-slate-950/40 transition-colors">
-                        
-                        {/* Left Side: Uploaded File Coordinates */}
                         <div className="col-span-5 flex items-center gap-2 min-w-0">
                           <FileSpreadsheet className="w-3.5 h-3.5 text-slate-600 shrink-0" />
                           <span className="font-mono text-xs text-slate-300 truncate" title={rawHeader}>{rawHeader}</span>
                         </div>
 
-                        {/* Mid-Point Interceptor Transition Indicator Arrow */}
                         <div className="col-span-2 flex justify-center">
                           <div className={`p-1 rounded-lg border ${
                             activeMatch ? 'bg-indigo-950/30 border-indigo-900/50 text-indigo-400' : 'bg-slate-950 border-slate-800 text-slate-600'
@@ -249,7 +276,6 @@ export default function CustomFileProcessor({ onJobCreated }) {
                           </div>
                         </div>
 
-                        {/* Right Side: Mapping Registry Destination Configuration Dropdown Selector */}
                         <div className="col-span-5">
                           <select
                             value={activeMatch || ''}
@@ -279,14 +305,12 @@ export default function CustomFileProcessor({ onJobCreated }) {
                             </optgroup>
                           </select>
                         </div>
-
                       </div>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Progression Controls */}
               <div className="flex justify-end pt-2">
                 <button
                   type="button" disabled={!isMappingValid} onClick={() => setCurrentStep(3)}
@@ -295,7 +319,6 @@ export default function CustomFileProcessor({ onJobCreated }) {
                   Confirm Transformations Mapping <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
-
             </div>
           )}
         </Step>
