@@ -3,6 +3,8 @@ package com.mycompany.contact_app.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -15,11 +17,19 @@ public class ImportJob extends BaseEntity {
     @Column(name = "job_id")
     private UUID jobId;
 
+    // Isolate job records per tenant boundary
     @Column(name = "business_unit_id", nullable = false)
     private UUID buId;
 
     @Column(nullable = false, length = 50)
     private String status;
+
+    @Column(name = "file_path")
+    private String filePath;
+
+    // Track default target entity type (e.g., CONTACT, COMPANY, GENERAL)
+    @Column(name = "entity_type")
+    private String entityType;
 
     @Column(name = "total_records")
     private int totalRecords;
@@ -39,6 +49,9 @@ public class ImportJob extends BaseEntity {
 
     @Column(name = "failed_records")
     private int failedRecords = 0;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     public void setBusinessUnitId(UUID fromString) {
         this.buId = fromString;

@@ -5,6 +5,8 @@ import com.mycompany.contact_app.dto.ImportJobDTO;
 import com.mycompany.contact_app.dto.ImportRowDto;
 import com.mycompany.contact_app.entity.*;
 import com.mycompany.contact_app.repository.ImportJobRepository;
+import com.mycompany.contact_app.security.TenantContext;
+
 import jakarta.persistence.EntityManager;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -21,11 +23,12 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Stream;
 
 @Service
-public class PolymorphicImportService {
+public class PolymorphicImportService implements ImportService {
 
     private static final Logger log = LoggerFactory.getLogger(PolymorphicImportService.class);
     private static final int BATCH_SIZE = 100;
@@ -45,6 +48,40 @@ public class PolymorphicImportService {
         this.eventPublisher = eventPublisher;
     }
 
+    @Override
+    @Transactional
+    public ImportJobDTO triggerImport(String tenantId, String filePath, String entityType, int totalRecords) {
+        // Instantiate tracking entity for batch ingestion process
+        ImportJob job = new ImportJob();
+        job.setBusinessUnitId(UUID.fromString(tenantId));
+        job.setFilePath(filePath);
+
+        // Retain entity classification if entityType exists on ImportJob; skip
+        // otherwise
+        if (entityType != null) {
+            job.setEntityType(entityType.toUpperCase());
+        }
+
+        job.setTotalRecords(totalRecords);
+        job.setProcessedRecords(0);
+        job.setInsertedRecords(0);
+        job.setUpdatedRecords(0);
+        job.setFailedRecords(0);
+        job.setStatus("PENDING");
+        job.setCreatedAt(LocalDateTime.now());
+
+        // Save initial job record synchronously to generate Job UUID
+        ImportJob savedJob = jobRepository.save(job);
+
+        // Map to light transfer object to pass into asynchronous task executor
+        ImportJobDTO dto = mapToDTO(savedJob);
+
+        // Trigger background processing execution on worker thread pool
+        processImport(dto);
+
+        return dto;
+    }
+
     /**
      * Spawns an asynchronous worker thread to parse, deduplicate, validate,
      * and persist batch datasets securely within structural multi-tenant
@@ -53,20 +90,31 @@ public class PolymorphicImportService {
     @Async("importTaskExecutor")
     @Transactional
     public void processImport(ImportJobDTO jobDto) {
+        // Fetch job instance inside async thread transaction
         ImportJob job = jobRepository.findById(jobDto.getJobId())
-                .orElseThrow(
-                        () -> new NoSuchElementException("Import job profile missing for ID: " + jobDto.getJobId()));
+                .orElseThrow(() -> new NoSuchElementException("Import job missing for ID: " + jobDto.getJobId()));
 
+        // Bind tenant ID to ThreadLocal context so RLS and repository queries execute
+        // in isolation
+        TenantContext.setCurrentTenant(job.getBusinessUnitId().toString());
+
+        // Update status to mark background execution active
         job.setStatus("PROCESSING");
         jobRepository.saveAndFlush(job);
 
         Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"), "contact-imports");
         File file = locateUploadedFile(tempDir, job.getJobId());
 
+        if (file == null || !file.exists() && job.getFilePath() != null) {
+            file = new File(job.getFilePath());
+        }
+
+        // Halt execution safely if target upload file is missing on storage
         if (file == null || !file.exists()) {
             job.setStatus("FAILED");
             job.setErrorMessage("Staged target upload file could not be found on server scratch disks.");
             jobRepository.saveAndFlush(job);
+            TenantContext.clear();
             return;
         }
 
@@ -87,8 +135,11 @@ public class PolymorphicImportService {
                     BaseContact targetEntity;
                     boolean isUpdate = false;
 
+                    // Polymorphic handling: Identify whether row maps to COMPANY or CONTACT
                     if ("COMPANY".equalsIgnoreCase(row.getRecordType())) {
                         Optional<Company> existingCompany = Optional.empty();
+
+                        // Query existing company using tenant context and Tax ID
                         if (row.getTaxId() != null && !row.getTaxId().isBlank()) {
                             existingCompany = entityManager.createQuery(
                                     "SELECT c FROM Company c WHERE c.taxId = :taxId AND c.businessUnitId = :buId",
@@ -109,6 +160,8 @@ public class PolymorphicImportService {
                         }
                     } else {
                         Optional<Contact> existingContact = Optional.empty();
+
+                        // Query existing contact using tenant context and Email address
                         if (row.getEmail() != null && !row.getEmail().isBlank()) {
                             existingContact = entityManager.createQuery(
                                     "SELECT c FROM Contact c WHERE c.email = :email AND c.businessUnitId = :buId",
@@ -130,20 +183,23 @@ public class PolymorphicImportService {
                         }
                     }
 
-                    // Hydrate Core Shared Fields
+                    // Hydrate inherited root entity fields (Core Shared Fields)
                     targetEntity.setName(row.getName());
                     targetEntity.setStatus("ACTIVE");
                     targetEntity.setBusinessUnitId(job.getBusinessUnitId());
 
+                    // Merge dynamic metadata fields into entity attribute map
                     if (isUpdate && targetEntity.getCustomAttributes() != null) {
                         targetEntity.getCustomAttributes().putAll(row.getGenericAttributes());
                     } else {
                         targetEntity.setCustomAttributes(row.getGenericAttributes());
                     }
 
+                    // Validate custom dynamic attributes against active metadata rules for tenant
                     // Validate Dynamic Schemas Against Metadata Requirements
                     metadataRegistry.validateAttributes(job.getBusinessUnitId(), targetEntity.getCustomAttributes());
 
+                    // Persist or update entity state
                     if (isUpdate) {
                         entityManager.merge(targetEntity);
                         updated++;
@@ -153,11 +209,13 @@ public class PolymorphicImportService {
                     }
 
                 } catch (Exception rowException) {
+                    // Log row processing exception and record audit failure log
                     log.warn("Row-Level Exclusion caught on row {}. Reason: {}", currentRowIndex,
                             rowException.getMessage());
                     failed++;
 
                     // Log row breakdown directly to database tracking error tables
+                    // Sync and flush batch increments to maintain flat memory footings
                     ImportErrorLog errorLog = new ImportErrorLog();
                     errorLog.setJobId(job.getJobId());
                     errorLog.setRowNumber(currentRowIndex);
@@ -171,7 +229,8 @@ public class PolymorphicImportService {
 
                 processed++;
 
-                // Sync and flush batch increments to maintain flat memory footings
+                // Periodically flush persistence context to avoid memory leakage on large
+                // datasets
                 if (processed % BATCH_SIZE == 0) {
                     entityManager.flush();
                     entityManager.clear();
@@ -186,6 +245,7 @@ public class PolymorphicImportService {
                 }
             }
 
+            // Determine final completion status
             // Final Sync Wrap Up
             job.setStatus(failed == processed ? "FAILED" : (failed > 0 ? "PARTIAL_SUCCESS" : "COMPLETED"));
             job.setProcessedRecords(processed);
@@ -198,10 +258,17 @@ public class PolymorphicImportService {
             job.setStatus("FAILED");
             job.setErrorMessage("Catastrophic container read error: " + fileException.getMessage());
         } finally {
+            // Persist final job counters, purge local batch temporary file, and notify
+            // listeners
             jobRepository.saveAndFlush(job);
-            if (file.exists())
+            if (file.exists()) {
                 file.delete();
-            eventPublisher.publishEvent(new ImportFinishedEvent(job.getJobId(), job.getStatus()));
+            }
+            eventPublisher.publishEvent(new ImportFinishedEvent(job.getJobId(), job.getBusinessUnitId().toString(),
+                    job.getEntityType(), job.getStatus()));
+            // Clear ThreadLocal tenant context to avoid memory/security leaks across
+            // re-used threads
+            TenantContext.clear();
         }
     }
 
@@ -357,6 +424,22 @@ public class PolymorphicImportService {
             }
             default -> "";
         };
+    }
+
+    private ImportJobDTO mapToDTO(ImportJob job) {
+        ImportJobDTO dto = new ImportJobDTO();
+        dto.setJobId(job.getJobId());
+        dto.setBusinessUnitId(job.getBusinessUnitId().toString());
+        dto.setFilePath(job.getFilePath());
+
+        // Safely map entityType if field exists on entity and DTO
+        dto.setEntityType(job.getEntityType());
+
+        dto.setTotalRecords(job.getTotalRecords());
+        dto.setProcessedRecords(job.getProcessedRecords());
+        dto.setStatus(job.getStatus());
+        dto.setCreatedAt(job.getCreatedAt());
+        return dto;
     }
 
     /**

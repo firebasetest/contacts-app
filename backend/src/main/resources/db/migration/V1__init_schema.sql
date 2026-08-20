@@ -126,6 +126,7 @@ CREATE TABLE import_jobs (
     job_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     business_unit_id UUID NOT NULL REFERENCES business_units(id) ON DELETE CASCADE,
     status VARCHAR(50) NOT NULL,
+    entity_type VARCHAR(50) NOT NULL DEFAULT 'GENERAL',
     total_records INTEGER DEFAULT 0 NOT NULL,
     processed_records INTEGER DEFAULT 0 NOT NULL,
     inserted_records INTEGER DEFAULT 0 NOT NULL,
@@ -168,6 +169,7 @@ CREATE INDEX idx_contacts_parent ON contacts(parent_company_id);
 CREATE INDEX idx_contacts_security_lookup ON contacts (external_user_id, system_role);
 CREATE INDEX idx_import_jobs_bu_id ON import_jobs(business_unit_id);
 CREATE INDEX idx_import_jobs_status_updated ON import_jobs(status, updated_at);
+CREATE INDEX idx_import_jobs_bu_entity ON import_jobs(business_unit_id, entity_type);
 CREATE INDEX idx_attr_definitions_bu ON attribute_definitions(business_unit_id);
 CREATE INDEX idx_audit_logs_bu_entity ON audit_logs(business_unit_id, entity_type, entity_id);
 CREATE INDEX idx_contacts_temporal_range ON contacts_history (contact_id, valid_from, valid_to);

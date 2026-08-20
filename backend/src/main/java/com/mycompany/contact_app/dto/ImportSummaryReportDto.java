@@ -7,6 +7,8 @@ import java.util.UUID;
 public class ImportSummaryReportDto {
     private UUID jobId;
     private String status;
+    private String businessUnitId;
+    private String entityType; // Added for downstream analytics and reporting UI
     private int totalRecords;
     private int processedRecords;
     private int insertedRecords;
@@ -86,5 +88,21 @@ public class ImportSummaryReportDto {
 
     public void setErrorLogs(List<ImportErrorLog> errorLogs) {
         this.errorLogs = errorLogs;
+    }
+
+    public String getBusinessUnitId() {
+        return businessUnitId;
+    }
+
+    public void setBusinessUnitId(String businessUnitId) {
+        this.businessUnitId = businessUnitId;
+    }
+
+    public String getEntityType() {
+        return entityType;
+    }
+
+    public void setEntityType(String entityType) {
+        this.entityType = entityType;
     }
 }
