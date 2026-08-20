@@ -3,8 +3,10 @@ package com.mycompany.contact_app.controller;
 import com.mycompany.contact_app.security.TenantContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,9 +15,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 
-//import com.mycompany.contact_app.filter.TenantContextFilter;
 import com.mycompany.contact_app.dto.ImportJobDTO;
 import com.mycompany.contact_app.dto.ImportSummaryReportDto;
 import com.mycompany.contact_app.entity.ImportErrorLog;
@@ -26,11 +29,17 @@ import com.mycompany.contact_app.repository.ImportJobRepository;
 
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import com.monitorjbl.xlsx.StreamingReader; // Excel Streaming Reader library
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/v1/imports")
 public class ImportController {
 
+    private static final Logger log = LoggerFactory.getLogger(ImportController.class);
     private final PolymorphicImportService importService;
     private final ImportJobRepository jobRepository;
     private final ImportErrorLogRepository errorLogRepository;
@@ -42,6 +51,17 @@ public class ImportController {
         this.jobRepository = jobRepository;
         this.errorLogRepository = errorLogRepository;
     }
+
+    /*
+     * Problem: Files copied to the temporary directory (/tmp/contact-imports/) are
+     * never deleted after execution, causing disk space exhaustion over time.
+     * Furthermore, loading Excel files with WorkbookFactory.create(is) reads entire
+     * workbooks into memory at once, risking OutOfMemoryError on large file
+     * uploads.
+     * Fix: Implement a finally block or worker cleanup process to delete staged
+     * temporary files, and switch to a streaming Excel reader (such as Excel
+     * Streaming Reader or POI SAX handler) for counting rows.
+     */
 
     @PostMapping("/upload")
     public ResponseEntity<ImportJobDTO> uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
@@ -94,6 +114,55 @@ public class ImportController {
         return new ResponseEntity<>(dto, HttpStatus.ACCEPTED);
     }
 
+    @PostMapping("/upload")
+    public ResponseEntity<ImportJobDTO> uploadFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("entityType") String entityType) {
+
+        if (file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Uploaded file cannot be empty.");
+        }
+
+        String tenantId = TenantContext.getCurrentTenant();
+        if (tenantId == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Tenant context missing.");
+        }
+
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        Path tenantUploadDir = Paths.get(tmpDir, "contact-imports", tenantId);
+        Path targetPath = null;
+
+        try {
+            Files.createDirectories(tenantUploadDir);
+
+            String originalFilename = StringUtils.cleanPath(
+                    Objects.requireNonNullElse(file.getOriginalFilename(), "import.csv"));
+            String safeFilename = UUID.randomUUID() + "_" + originalFilename;
+            targetPath = tenantUploadDir.resolve(safeFilename);
+
+            // Copy stream directly to disk
+            Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+
+            // Efficient streaming record count
+            int totalRecords = calculateRecordCount(targetPath, originalFilename);
+
+            // 2. Fire-and-forget execution block context onto dedicated worker pools
+            ImportJobDTO jobDTO = importService.triggerImport(tenantId, targetPath.toString(), entityType,
+                    totalRecords);
+
+            // 3. Return immediate tracking handle acknowledgement back to the client
+            return ResponseEntity.ok(jobDTO);
+
+        } catch (IllegalArgumentException e) {
+            cleanupTempFile(targetPath);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            cleanupTempFile(targetPath);
+            log.error("Failed to process file upload for tenant {}", tenantId, e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "File processing failed.");
+        }
+    }
+
     @PostMapping("/trigger")
     public UUID triggerImport(@RequestBody ImportJobDTO jobDto) {
         importService.processImport(jobDto);
@@ -111,21 +180,45 @@ public class ImportController {
      * Helper to compute file size thresholds safely depending on document metadata
      * characteristics.
      */
-    private int calculateRecordCount(Path file, String extension) throws IOException {
-        if (".xlsx".equals(extension) || ".xls".equals(extension)) {
-            try (InputStream is = Files.newInputStream(file);
-                    Workbook workbook = WorkbookFactory.create(is)) {
-                var sheet = workbook.getSheetAt(0);
-                // Total lines equals physical mapped rows minus the index row header line block
-                int totalRows = sheet.getPhysicalNumberOfRows();
-                return totalRows > 0 ? totalRows - 1 : 0;
-            } catch (Exception e) {
-                throw new IOException("Failed parsing row structures within the uploaded Excel sheet.", e);
+    private int calculateRecordCount(Path filePath, String filename) throws IOException {
+        String lowerName = filename.toLowerCase();
+
+        if (lowerName.endsWith(".csv")) {
+            try (Stream<String> lines = Files.lines(filePath)) {
+                long lineCount = lines.count();
+                return lineCount > 1 ? (int) lineCount - 1 : 0; // Exclude header row
             }
+        } else if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
+            return countExcelRowsStreaming(filePath);
         } else {
-            // High efficiency line counter sequence stream for flat CSV files
-            try (var lines = Files.lines(file)) {
-                return (int) lines.skip(1).count();
+            throw new IllegalArgumentException("Unsupported file type. Supported formats: .csv, .xlsx, .xls");
+        }
+    }
+
+    private int countExcelRowsStreaming(Path filePath) throws IOException {
+        // Stream rows using a small memory buffer instead of reading the entire DOM
+        // into heap
+        try (InputStream is = Files.newInputStream(filePath);
+                Workbook workbook = StreamingReader.builder()
+                        .rowCacheSize(100)
+                        .bufferSize(4096)
+                        .open(is)) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+            int rowCount = 0;
+            for (var row : sheet) {
+                rowCount++;
+            }
+            return rowCount > 1 ? rowCount - 1 : 0; // Exclude header row
+        }
+    }
+
+    private void cleanupTempFile(Path path) {
+        if (path != null) {
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                log.warn("Failed to delete temporary staging file: {}", path, e);
             }
         }
     }

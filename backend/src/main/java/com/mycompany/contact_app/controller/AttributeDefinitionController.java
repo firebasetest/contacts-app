@@ -1,7 +1,10 @@
 package com.mycompany.contact_app.controller;
 
 import com.mycompany.contact_app.entity.AttributeDefinition;
+import com.mycompany.contact_app.security.TenantContext;
 import com.mycompany.contact_app.service.AttributeDefinitionService;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +22,15 @@ public class AttributeDefinitionController {
 
     @GetMapping("/attribute-definitions")
     public ResponseEntity<List<AttributeDefinition>> getDefinitions(@RequestParam UUID buId) {
+        // CRITICAL FIX: Validate tenant context first to ensure robustness against
+        // null/unauthenticated users.
+        // Avoid accepting an arbitrary buId request parameter without checking
+        // if it matches the authenticated caller's tenant context.
+        // This enables Broken Object Level Authorization (BOLA/IDOR),
+        // allowing tenants to query metadata belonging to other organizations.
+        if (!TenantContext.isSame(buId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(service.findByBusinessUnit(buId));
     }
 

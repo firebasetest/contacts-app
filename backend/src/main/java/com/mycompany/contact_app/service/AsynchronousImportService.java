@@ -79,7 +79,8 @@ public class AsynchronousImportService {
         } finally {
             // Finalize by publishing event
             jobRepository.save(job);
-            eventPublisher.publishEvent(new ImportFinishedEvent(job.getJobId(), job.getStatus()));
+            eventPublisher.publishEvent(new ImportFinishedEvent(job.getJobId(), job.getBusinessUnitId().toString(),
+                    job.getEntityType(), job.getStatus()));
         }
     }
 
@@ -99,16 +100,20 @@ public class AsynchronousImportService {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] values = line.split(",");
-
+                if (values.length < 2) {
+                    log.warn("Skipping malformed line: {}", line);
+                    continue;
+                }
                 Contact contact = new Contact();
-                contact.setName(values[0]);
-                contact.setEmail(values[1]);
+                contact.setName(values[0].trim());
+                contact.setEmail(values[1].trim());
                 contact.setStatus("ACTIVE");
 
                 // CRITICAL: Ensure the contact belongs to the current tenant
                 contact.setBusinessUnitId(job.getBusinessUnitId());
 
                 contacts.add(contact);
+
             }
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse import file for job: " + job.getJobId(), e);
@@ -152,11 +157,15 @@ public class AsynchronousImportService {
 
     private Contact parseLineToContact(String line, UUID buId) {
         String[] values = line.split(",");
-        Contact contact = new Contact();
-        contact.setName(values[0]);
-        contact.setEmail(values[1]);
-        contact.setBusinessUnitId(buId);
-        return contact;
+        if (values.length >= 2) {
+            Contact contact = new Contact();
+            contact.setName(values[0].trim());
+            contact.setEmail(values[1].trim());
+            contact.setBusinessUnitId(buId);
+            return contact;
+        } else {
+            throw new IllegalArgumentException("Malformed line: " + line);
+        }
     }
 
 }

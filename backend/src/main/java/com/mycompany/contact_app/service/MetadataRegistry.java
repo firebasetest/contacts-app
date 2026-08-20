@@ -52,6 +52,8 @@ public class MetadataRegistry {
 
             // Logic for data type validation would also go here (e.g., check if value
             // matches dataType)
+            // TODO: use job.getEntityType() to preload entity-specific field schemas before
+            // parsing rows, avoiding per-row schema lookups.
         }
     }
 

@@ -124,15 +124,15 @@ public class ContactAuditService {
      * database layer.
      */
     @Transactional(readOnly = true)
-    public List<ContactHistory> getAuditTrailForEntity(UUID entityId) {
-        if (entityId == null) {
+    public List<ContactHistory> getAuditTrailForContact(UUID contactId) {
+        if (contactId == null) {
             log.warn("Attempted to fetch audit log trail for a null entity identifier.");
             return Collections.emptyList();
         }
 
-        log.info("Fetching chronological change ledger trail for record: {}", entityId);
+        log.info("Fetching chronological change ledger trail for record: {}", contactId);
 
         // Return sorted historical events matching our layout expectation
-        return historyRepository.findByEntityIdOrderByVersionDesc(entityId);
+        return historyRepository.findByContactIdOrderByVersionDesc(contactId);
     }
 }
