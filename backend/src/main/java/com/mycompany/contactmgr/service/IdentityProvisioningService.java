@@ -1,7 +1,7 @@
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
-import com.mycompany.contact_app.entity.Contact;
-import com.mycompany.contact_app.repository.ContactRepository;
+import com.mycompany.contactmgr.entity.Contact;
+import com.mycompany.contactmgr.repository.ContactRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -59,7 +59,7 @@ public class IdentityProvisioningService {
         }
 
         // State 2: AOT Pre-Provisioning Linkage Fallback
-        // Check if an administrative bulk operation pre-loaded this user via email but
+        // Check if an administrative bulk operation preloaded this user via email but
         // hasn't mapped their external OAuth ID yet
         log.info("First login detected for external ID {}. Checking for pre-provisioned AOT records matching email: {}",
                 externalId, email);

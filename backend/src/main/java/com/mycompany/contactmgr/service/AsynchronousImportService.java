@@ -1,10 +1,10 @@
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
-import com.mycompany.contact_app.dto.ImportJobDTO;
-import com.mycompany.contact_app.entity.Contact;
-import com.mycompany.contact_app.entity.ImportJob;
-import com.mycompany.contact_app.repository.ContactRepository;
-import com.mycompany.contact_app.repository.ImportJobRepository;
+import com.mycompany.contactmgr.dto.ImportJobDTO;
+import com.mycompany.contactmgr.entity.Contact;
+import com.mycompany.contactmgr.entity.ImportJob;
+import com.mycompany.contactmgr.repository.ContactRepository;
+import com.mycompany.contactmgr.repository.ImportJobRepository;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

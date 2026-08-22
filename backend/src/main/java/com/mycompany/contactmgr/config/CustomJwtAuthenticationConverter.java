@@ -1,9 +1,9 @@
-package com.mycompany.contact_app.config;
+package com.mycompany.contactmgr.config;
 
-//import com.mycompany.contact_app.filter.TenantContextFilter;
-import com.mycompany.contact_app.security.TenantContext;
-import com.mycompany.contact_app.service.IdentityProvisioningService;
-import com.mycompany.contact_app.exception.MissingTenantClaimException;
+//import com.mycompany.contactmgr.filter.TenantContextFilter;
+import com.mycompany.contactmgr.security.TenantContext;
+import com.mycompany.contactmgr.service.IdentityProvisioningService;
+import com.mycompany.contactmgr.exception.MissingTenantClaimException;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.NonNull;

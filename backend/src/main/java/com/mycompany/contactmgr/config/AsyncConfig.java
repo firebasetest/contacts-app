@@ -1,4 +1,4 @@
-package com.mycompany.contact_app.config;
+package com.mycompany.contactmgr.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-package com.mycompany.contact_app.exception;
+package com.mycompany.contactmgr.exception;
 
 public class DuplicateEmailException extends RuntimeException {
     public DuplicateEmailException(String message) {

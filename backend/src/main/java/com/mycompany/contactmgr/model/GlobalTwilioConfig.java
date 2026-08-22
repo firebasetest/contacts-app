@@ -1,5 +1,5 @@
 
-package com.mycompany.contact_app.model;
+package com.mycompany.contactmgr.model;
 
 /**
  * Immutable configuration holding default global Twilio credentials and identifiers.

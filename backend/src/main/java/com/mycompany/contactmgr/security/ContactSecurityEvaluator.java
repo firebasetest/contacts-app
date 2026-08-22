@@ -1,7 +1,7 @@
-package com.mycompany.contact_app.security;
+package com.mycompany.contactmgr.security;
 
-import com.mycompany.contact_app.entity.BaseContact;
-import com.mycompany.contact_app.repository.ContactRepository;
+import com.mycompany.contactmgr.entity.BaseContact;
+import com.mycompany.contactmgr.repository.ContactRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 

@@ -1,4 +1,4 @@
-package com.mycompany.contact_app;
+package com.mycompany.contactmgr;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

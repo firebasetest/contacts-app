@@ -1,8 +1,8 @@
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
-import com.mycompany.contact_app.entity.BaseContact;
-import com.mycompany.contact_app.entity.Contact;
-import com.mycompany.contact_app.repository.ContactRepository;
+import com.mycompany.contactmgr.entity.BaseContact;
+import com.mycompany.contactmgr.entity.Contact;
+import com.mycompany.contactmgr.repository.ContactRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

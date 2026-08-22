@@ -1,12 +1,11 @@
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
-import com.mycompany.contact_app.service.MetadataRegistry;
 import com.monitorjbl.xlsx.StreamingReader;
-import com.mycompany.contact_app.dto.ImportJobDTO;
-import com.mycompany.contact_app.dto.ImportRowDto;
-import com.mycompany.contact_app.entity.*;
-import com.mycompany.contact_app.repository.ImportJobRepository;
-import com.mycompany.contact_app.security.TenantContext;
+import com.mycompany.contactmgr.dto.ImportJobDTO;
+import com.mycompany.contactmgr.dto.ImportRowDto;
+import com.mycompany.contactmgr.entity.*;
+import com.mycompany.contactmgr.repository.ImportJobRepository;
+import com.mycompany.contactmgr.security.TenantContext;
 
 import jakarta.persistence.EntityManager;
 import org.apache.commons.csv.CSVFormat;

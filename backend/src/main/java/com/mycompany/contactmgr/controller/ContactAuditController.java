@@ -1,7 +1,7 @@
-package com.mycompany.contact_app.controller;
+package com.mycompany.contactmgr.controller;
 
-import com.mycompany.contact_app.dto.ContactHistoryResponseDto;
-import com.mycompany.contact_app.service.ContactAuditService;
+import com.mycompany.contactmgr.dto.ContactHistoryResponseDto;
+import com.mycompany.contactmgr.service.ContactAuditService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

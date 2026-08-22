@@ -1,5 +1,5 @@
 
-package com.mycompany.contact_app.exception;
+package com.mycompany.contactmgr.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

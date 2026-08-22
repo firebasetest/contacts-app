@@ -1,4 +1,4 @@
-package com.mycompany.contact_app.dto;
+package com.mycompany.contactmgr.dto;
 
 import lombok.Builder;
 import lombok.Data;

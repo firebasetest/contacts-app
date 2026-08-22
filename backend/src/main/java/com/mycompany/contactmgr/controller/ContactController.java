@@ -1,13 +1,13 @@
-package com.mycompany.contact_app.controller;
+package com.mycompany.contactmgr.controller;
 
-import com.mycompany.contact_app.dto.ContactRequestDto;
-import com.mycompany.contact_app.entity.BaseContact;
-import com.mycompany.contact_app.entity.Company;
-import com.mycompany.contact_app.entity.Contact;
-import com.mycompany.contact_app.entity.ContactHistory;
-import com.mycompany.contact_app.exception.ResourceNotFoundException;
-import com.mycompany.contact_app.service.BatchActionService;
-import com.mycompany.contact_app.service.ContactService;
+import com.mycompany.contactmgr.dto.ContactRequestDto;
+import com.mycompany.contactmgr.entity.BaseContact;
+import com.mycompany.contactmgr.entity.Company;
+import com.mycompany.contactmgr.entity.Contact;
+import com.mycompany.contactmgr.entity.ContactHistory;
+import com.mycompany.contactmgr.exception.ResourceNotFoundException;
+import com.mycompany.contactmgr.service.BatchActionService;
+import com.mycompany.contactmgr.service.ContactService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

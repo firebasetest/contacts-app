@@ -6,8 +6,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
-//import com.mycompany.contactmgr.filter.TenantContextFilter;
-
 import java.util.Optional;
 
 @Configuration
@@ -17,7 +15,7 @@ public class AuditConfig {
     @Bean
     public AuditorAware<String> auditorProvider() {
         // In a real app, integrate with Spring Security to get the logged-in User ID
-        //return () -> Optional.ofNullable(TenantContext.getCurrentTenant());
+        // return () -> Optional.ofNullable(TenantContext.getCurrentTenant());
         return () -> TenantContext.getCurrentTenant();
     }
 }

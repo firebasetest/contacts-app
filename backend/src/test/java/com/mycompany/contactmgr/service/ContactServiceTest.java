@@ -1,10 +1,10 @@
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
-import com.mycompany.contact_app.entity.Contact;
-import com.mycompany.contact_app.entity.ContactHistory;
-import com.mycompany.contact_app.repository.ContactHistoryRepository;
-import com.mycompany.contact_app.repository.ContactRepository;
-import com.mycompany.contact_app.security.TenantContext;
+import com.mycompany.contactmgr.entity.Contact;
+import com.mycompany.contactmgr.entity.ContactHistory;
+import com.mycompany.contactmgr.repository.ContactHistoryRepository;
+import com.mycompany.contactmgr.repository.ContactRepository;
+import com.mycompany.contactmgr.security.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

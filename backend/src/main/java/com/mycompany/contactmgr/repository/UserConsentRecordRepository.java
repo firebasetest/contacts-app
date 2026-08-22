@@ -1,8 +1,8 @@
 
-package com.mycompany.contact_app.repository;
+package com.mycompany.contactmgr.repository;
 
-import com.mycompany.contact_app.entity.UserConsentRecord;
-import com.mycompany.contact_app.model.ConsentPurpose;
+import com.mycompany.contactmgr.entity.UserConsentRecord;
+import com.mycompany.contactmgr.model.ConsentPurpose;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

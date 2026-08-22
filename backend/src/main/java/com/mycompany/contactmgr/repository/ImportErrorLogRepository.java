@@ -1,6 +1,6 @@
-package com.mycompany.contact_app.repository;
+package com.mycompany.contactmgr.repository;
 
-import com.mycompany.contact_app.entity.ImportErrorLog;
+import com.mycompany.contactmgr.entity.ImportErrorLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.UUID;

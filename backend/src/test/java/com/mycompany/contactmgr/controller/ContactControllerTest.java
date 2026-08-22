@@ -1,8 +1,8 @@
-package com.mycompany.contact_app.controller;
+package com.mycompany.contactmgr.controller;
 
-import com.mycompany.contact_app.entity.Contact;
-import com.mycompany.contact_app.service.BatchActionService;
-import com.mycompany.contact_app.service.ContactService;
+import com.mycompany.contactmgr.entity.Contact;
+import com.mycompany.contactmgr.service.BatchActionService;
+import com.mycompany.contactmgr.service.ContactService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;

@@ -1,4 +1,4 @@
-package com.mycompany.contact_app.security;
+package com.mycompany.contactmgr.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -8,9 +8,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mycompany.contact_app.entity.Company;
-import com.mycompany.contact_app.entity.Contact;
-import com.mycompany.contact_app.repository.ContactRepository;
+import com.mycompany.contactmgr.entity.Company;
+import com.mycompany.contactmgr.entity.Contact;
+import com.mycompany.contactmgr.repository.ContactRepository;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;

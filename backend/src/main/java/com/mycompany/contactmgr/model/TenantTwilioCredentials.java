@@ -1,5 +1,5 @@
 
-package com.mycompany.contact_app.model;
+package com.mycompany.contactmgr.model;
 
 /**
  * Immutable structure holding custom Twilio credentials retrieved from a specific tenant's settings.

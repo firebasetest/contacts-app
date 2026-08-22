@@ -1,4 +1,4 @@
-package com.mycompany.contact_app.exception;
+package com.mycompany.contactmgr.exception;
 
 public class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String message) {

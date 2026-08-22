@@ -1,4 +1,4 @@
-package com.mycompany.contact_app.exception;
+package com.mycompany.contactmgr.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

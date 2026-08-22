@@ -1,4 +1,4 @@
-package com.mycompany.contact_app.entity;
+package com.mycompany.contactmgr.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

@@ -1,6 +1,6 @@
-package com.mycompany.contact_app.repository;
+package com.mycompany.contactmgr.repository;
 
-import com.mycompany.contact_app.entity.ImportJob;
+import com.mycompany.contactmgr.entity.ImportJob;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;

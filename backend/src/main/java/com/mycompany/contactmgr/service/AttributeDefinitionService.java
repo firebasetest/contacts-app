@@ -1,7 +1,7 @@
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
-import com.mycompany.contact_app.entity.AttributeDefinition;
-import com.mycompany.contact_app.repository.AttributeDefinitionRepository;
+import com.mycompany.contactmgr.entity.AttributeDefinition;
+import com.mycompany.contactmgr.repository.AttributeDefinitionRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

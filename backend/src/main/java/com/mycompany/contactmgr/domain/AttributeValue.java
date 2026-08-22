@@ -1,7 +1,6 @@
-package com.mycompany.contact_app.domain;
+package com.mycompany.contactmgr.domain;
 
 import lombok.Data;
-import java.util.Map;
 
 @Data
 public class AttributeValue {

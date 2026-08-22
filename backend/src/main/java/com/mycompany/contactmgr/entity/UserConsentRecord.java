@@ -1,7 +1,7 @@
 
-package com.mycompany.contact_app.entity;
+package com.mycompany.contactmgr.entity;
 
-import com.mycompany.contact_app.model.ConsentPurpose;
+import com.mycompany.contactmgr.model.ConsentPurpose;
 import jakarta.persistence.*;
 import lombok.Data;
 

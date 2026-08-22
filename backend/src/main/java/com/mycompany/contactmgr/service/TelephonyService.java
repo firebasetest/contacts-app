@@ -1,12 +1,11 @@
 
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
-import com.mycompany.contact_app.entity.TenantSettings;
-import com.mycompany.contact_app.repository.TenantSettingsRepository;
+import com.mycompany.contactmgr.entity.TenantSettings;
+import com.mycompany.contactmgr.repository.TenantSettingsRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 import com.twilio.rest.api.v2010.account.Call;

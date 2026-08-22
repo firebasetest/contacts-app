@@ -1,10 +1,16 @@
-package com.mycompany.contact_app.dto;
+package com.mycompany.contactmgr.dto;
 
-import com.mycompany.contact_app.entity.ImportErrorLog;
+import com.mycompany.contactmgr.entity.ImportErrorLog;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 import java.util.UUID;
 
+@Setter
+@Getter
 public class ImportSummaryReportDto {
+    // Getters and Setters
     private UUID jobId;
     private String status;
     private String businessUnitId;
@@ -17,92 +23,4 @@ public class ImportSummaryReportDto {
     private String globalErrorMessage;
     private List<ImportErrorLog> errorLogs;
 
-    // Getters and Setters
-    public UUID getJobId() {
-        return jobId;
-    }
-
-    public void setJobId(UUID jobId) {
-        this.jobId = jobId;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public int getTotalRecords() {
-        return totalRecords;
-    }
-
-    public void setTotalRecords(int totalRecords) {
-        this.totalRecords = totalRecords;
-    }
-
-    public int getProcessedRecords() {
-        return processedRecords;
-    }
-
-    public void setProcessedRecords(int processedRecords) {
-        this.processedRecords = processedRecords;
-    }
-
-    public int getInsertedRecords() {
-        return insertedRecords;
-    }
-
-    public void setInsertedRecords(int insertedRecords) {
-        this.insertedRecords = insertedRecords;
-    }
-
-    public int getUpdatedRecords() {
-        return updatedRecords;
-    }
-
-    public void setUpdatedRecords(int updatedRecords) {
-        this.updatedRecords = updatedRecords;
-    }
-
-    public int getFailedRecords() {
-        return failedRecords;
-    }
-
-    public void setFailedRecords(int failedRecords) {
-        this.failedRecords = failedRecords;
-    }
-
-    public String getGlobalErrorMessage() {
-        return globalErrorMessage;
-    }
-
-    public void setGlobalErrorMessage(String globalErrorMessage) {
-        this.globalErrorMessage = globalErrorMessage;
-    }
-
-    public List<ImportErrorLog> getErrorLogs() {
-        return errorLogs;
-    }
-
-    public void setErrorLogs(List<ImportErrorLog> errorLogs) {
-        this.errorLogs = errorLogs;
-    }
-
-    public String getBusinessUnitId() {
-        return businessUnitId;
-    }
-
-    public void setBusinessUnitId(String businessUnitId) {
-        this.businessUnitId = businessUnitId;
-    }
-
-    public String getEntityType() {
-        return entityType;
-    }
-
-    public void setEntityType(String entityType) {
-        this.entityType = entityType;
-    }
 }

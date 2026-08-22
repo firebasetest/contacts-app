@@ -1,6 +1,6 @@
-package com.mycompany.contact_app.util;
+package com.mycompany.contactmgr.util;
 
-import com.mycompany.contact_app.entity.AttributeDefinition;
+import com.mycompany.contactmgr.entity.AttributeDefinition;
 import org.springframework.stereotype.Component;
 import java.util.Map;
 

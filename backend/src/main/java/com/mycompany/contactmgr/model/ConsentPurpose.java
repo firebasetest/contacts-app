@@ -1,5 +1,5 @@
 
-package com.mycompany.contact_app.model;
+package com.mycompany.contactmgr.model;
 
 /**
  * Defines the specific legal purposes for which consent can be granted or

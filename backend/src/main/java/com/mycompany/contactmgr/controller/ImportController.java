@@ -1,6 +1,6 @@
-package com.mycompany.contact_app.controller;
+package com.mycompany.contactmgr.controller;
 
-import com.mycompany.contact_app.security.TenantContext;
+import com.mycompany.contactmgr.security.TenantContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
@@ -18,13 +18,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import com.mycompany.contact_app.dto.ImportJobDTO;
-import com.mycompany.contact_app.dto.ImportSummaryReportDto;
-import com.mycompany.contact_app.entity.ImportErrorLog;
-import com.mycompany.contact_app.entity.ImportJob;
-import com.mycompany.contact_app.service.PolymorphicImportService;
-import com.mycompany.contact_app.repository.ImportErrorLogRepository;
-import com.mycompany.contact_app.repository.ImportJobRepository;
+import com.mycompany.contactmgr.dto.ImportJobDTO;
+import com.mycompany.contactmgr.dto.ImportSummaryReportDto;
+import com.mycompany.contactmgr.entity.ImportErrorLog;
+import com.mycompany.contactmgr.entity.ImportJob;
+import com.mycompany.contactmgr.service.PolymorphicImportService;
+import com.mycompany.contactmgr.repository.ImportErrorLogRepository;
+import com.mycompany.contactmgr.repository.ImportJobRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +55,7 @@ public class ImportController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Uploaded file cannot be empty.");
         }
 
-        String tenantId = TenantContext.getCurrentTenant();
+        String tenantId = TenantContext.getNonNullCurrentTenant();
         if (tenantId == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Tenant context missing.");
         }

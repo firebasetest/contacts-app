@@ -6,7 +6,7 @@ import {
   RefreshCw, Layers, Database, ChevronRight, HelpCircle, Check, Play, FileText 
 } from 'lucide-react';
 import { Sequence, Step } from '../../../components/Sequence'; // Ensure path alignment with your project structure
-import axiosClient from '../../api/axiosClient';
+import axiosClient from '../../../api/axiosClient';
 
 // ==========================================
 // 1. Target Schemas & Sample Mock Registries
@@ -373,3 +373,4 @@ export function CustomFileProcessor({ onProcessingComplete }) {
     </div>
   );
 }
+export default CustomFileProcessor;

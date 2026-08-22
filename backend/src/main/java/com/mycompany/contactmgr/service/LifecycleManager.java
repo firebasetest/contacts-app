@@ -1,6 +1,6 @@
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
-import com.mycompany.contact_app.entity.BaseContact;
+import com.mycompany.contactmgr.entity.BaseContact;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;

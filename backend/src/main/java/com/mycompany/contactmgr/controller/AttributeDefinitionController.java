@@ -1,8 +1,8 @@
-package com.mycompany.contact_app.controller;
+package com.mycompany.contactmgr.controller;
 
-import com.mycompany.contact_app.entity.AttributeDefinition;
-import com.mycompany.contact_app.security.TenantContext;
-import com.mycompany.contact_app.service.AttributeDefinitionService;
+import com.mycompany.contactmgr.entity.AttributeDefinition;
+import com.mycompany.contactmgr.security.TenantContext;
+import com.mycompany.contactmgr.service.AttributeDefinitionService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

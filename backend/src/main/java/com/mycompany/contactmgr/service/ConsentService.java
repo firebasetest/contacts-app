@@ -1,10 +1,9 @@
 
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
-import com.mycompany.contact_app.entity.UserConsentRecord;
-import com.mycompany.contact_app.exception.MissingTenantClaimException;
-import com.mycompany.contact_app.model.ConsentPurpose;
-import com.mycompany.contact_app.repository.UserConsentRecordRepository;
+import com.mycompany.contactmgr.entity.UserConsentRecord;
+import com.mycompany.contactmgr.model.ConsentPurpose;
+import com.mycompany.contactmgr.repository.UserConsentRecordRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

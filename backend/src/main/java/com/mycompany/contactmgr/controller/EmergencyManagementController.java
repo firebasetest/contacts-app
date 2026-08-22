@@ -1,7 +1,7 @@
-package com.mycompany.contact_app.controller;
+package com.mycompany.contactmgr.controller;
 
-import com.mycompany.contact_app.entity.BaseContact;
-import com.mycompany.contact_app.service.EmergencyService; // Use the new service
+import com.mycompany.contactmgr.entity.BaseContact;
+import com.mycompany.contactmgr.service.EmergencyService; // Use the new service
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;

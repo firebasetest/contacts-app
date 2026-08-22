@@ -1,8 +1,8 @@
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
-import com.mycompany.contact_app.dto.ContactHistoryResponseDto;
-import com.mycompany.contact_app.entity.ContactHistory;
-import com.mycompany.contact_app.repository.ContactHistoryRepository;
+import com.mycompany.contactmgr.dto.ContactHistoryResponseDto;
+import com.mycompany.contactmgr.entity.ContactHistory;
+import com.mycompany.contactmgr.repository.ContactHistoryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

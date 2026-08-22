@@ -1,13 +1,11 @@
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
 import java.time.LocalDateTime;
 
-import java.util.List;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.mycompany.contact_app.entity.ImportJob;
-import com.mycompany.contact_app.repository.ImportJobRepository;
+import com.mycompany.contactmgr.repository.ImportJobRepository;
 
 @Component
 public class JobRecoveryService {

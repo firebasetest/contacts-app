@@ -1,8 +1,8 @@
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
-import com.mycompany.contact_app.entity.BaseContact;
-import com.mycompany.contact_app.entity.Contact;
-import com.mycompany.contact_app.repository.ContactRepository;
+import com.mycompany.contactmgr.entity.BaseContact;
+import com.mycompany.contactmgr.entity.Contact;
+import com.mycompany.contactmgr.repository.ContactRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;

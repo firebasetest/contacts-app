@@ -1,4 +1,4 @@
-package com.mycompany.contact_app;
+package com.mycompany.contactmgr;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

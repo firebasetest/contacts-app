@@ -1,6 +1,6 @@
-package com.mycompany.contact_app.config;
+package com.mycompany.contactmgr.config;
 
-import com.mycompany.contact_app.security.TenantContext;
+import com.mycompany.contactmgr.security.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,7 +19,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-//import com.mycompany.contact_app.filter.TenantContextFilter;
+//import com.mycompany.contactmgr.filter.TenantContextFilter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

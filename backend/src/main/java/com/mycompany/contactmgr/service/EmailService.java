@@ -1,4 +1,4 @@
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

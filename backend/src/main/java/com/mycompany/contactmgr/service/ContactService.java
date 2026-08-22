@@ -1,12 +1,12 @@
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
-import com.mycompany.contact_app.entity.BaseContact;
-import com.mycompany.contact_app.entity.Company;
-import com.mycompany.contact_app.entity.Contact;
-import com.mycompany.contact_app.entity.ContactHistory;
-import com.mycompany.contact_app.repository.ContactHistoryRepository;
-import com.mycompany.contact_app.repository.ContactRepository;
-import com.mycompany.contact_app.security.TenantContext;
+import com.mycompany.contactmgr.entity.BaseContact;
+import com.mycompany.contactmgr.entity.Company;
+import com.mycompany.contactmgr.entity.Contact;
+import com.mycompany.contactmgr.entity.ContactHistory;
+import com.mycompany.contactmgr.repository.ContactHistoryRepository;
+import com.mycompany.contactmgr.repository.ContactRepository;
+import com.mycompany.contactmgr.security.TenantContext;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,7 +52,7 @@ public class ContactService {
      */
     public BaseContact save(BaseContact contact) {
         // FIXED: Now reads uniformly from the standardized TenantContext utility
-        String activeBuId = TenantContext.getCurrentTenant();
+        String activeBuId = TenantContext.getNonNullCurrentTenant();
         if (activeBuId != null) {
             contact.setBusinessUnitId(UUID.fromString(activeBuId));
         } else if (contact.getBusinessUnitId() == null) {
@@ -144,7 +144,7 @@ public class ContactService {
         historyRecord.setChangeAction(action);
 
         // FIXED: Switched from broken filter field lookup to global context utility
-        String currentActor = TenantContext.getCurrentTenant();
+        String currentActor = TenantContext.getNonNullCurrentTenant();
         historyRecord.setModifiedBy(currentActor != null ? currentActor : "SYSTEM_PROCESS");
 
         historyRepository.save(historyRecord);
@@ -172,7 +172,7 @@ public class ContactService {
 
     @Transactional
     public Contact createContact(Contact contact) {
-        String currentTenant = TenantContext.getCurrentTenant();
+        String currentTenant = TenantContext.getNonNullCurrentTenant();
         if (currentTenant != null) {
             contact.setBusinessUnitId(UUID.fromString(currentTenant));
         }

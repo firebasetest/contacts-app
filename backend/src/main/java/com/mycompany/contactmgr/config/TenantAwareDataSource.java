@@ -1,12 +1,11 @@
-package com.mycompany.contact_app.config;
+package com.mycompany.contactmgr.config;
 
-import com.mycompany.contact_app.security.TenantContext;
+import com.mycompany.contactmgr.security.TenantContext;
 import org.springframework.jdbc.datasource.DelegatingDataSource;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 /**
  * Inner proxy class to lazily set PostgreSQL context variables
@@ -33,7 +32,7 @@ class TenantAwareDataSource extends DelegatingDataSource {
     }
 
     private void applyTenantContext(Connection connection) throws SQLException {
-        String tenantId = TenantContext.getCurrentTenant();
+        String tenantId = TenantContext.getNonNullCurrentTenant();
         if (tenantId != null) {
             try (PreparedStatement stmt = connection.prepareStatement("SET LOCAL app.current_tenant = ?")) {
                 // Use setString instead of concatenation for safety

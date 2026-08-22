@@ -1,11 +1,16 @@
-package com.mycompany.contact_app.dto;
+package com.mycompany.contactmgr.dto;
 
-import com.mycompany.contact_app.entity.BaseContact;
-import com.mycompany.contact_app.entity.ContactHistory;
+import com.mycompany.contactmgr.entity.BaseContact;
+import com.mycompany.contactmgr.entity.ContactHistory;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
+@Setter
+@Getter
 public class ContactDataPortabilityDto {
+    // Getters and Setters
     private BaseContact currentProfile;
     private List<ContactHistory> auditTrailHistory;
 
@@ -14,20 +19,4 @@ public class ContactDataPortabilityDto {
         this.auditTrailHistory = auditTrailHistory;
     }
 
-    // Getters and Setters
-    public BaseContact getCurrentProfile() {
-        return currentProfile;
-    }
-
-    public void setCurrentProfile(BaseContact currentProfile) {
-        this.currentProfile = currentProfile;
-    }
-
-    public List<ContactHistory> getAuditTrailHistory() {
-        return auditTrailHistory;
-    }
-
-    public void setAuditTrailHistory(List<ContactHistory> auditTrailHistory) {
-        this.auditTrailHistory = auditTrailHistory;
-    }
 }

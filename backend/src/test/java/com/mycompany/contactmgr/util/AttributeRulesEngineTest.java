@@ -1,9 +1,9 @@
-package com.mycompany.contact_app.util;
+package com.mycompany.contactmgr.util;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.mycompany.contact_app.entity.AttributeDefinition;
+import com.mycompany.contactmgr.entity.AttributeDefinition;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;

@@ -1,15 +1,10 @@
-package com.mycompany.contact_app.controller;
+package com.mycompany.contactmgr.controller;
 
-import com.mycompany.contact_app.entity.TenantSettings;
-import com.mycompany.contact_app.repository.TenantSettingsRepository;
-import com.mycompany.contact_app.security.TenantContext;
-import com.mycompany.contact_app.model.ConsentPurpose;
-import com.mycompany.contact_app.model.GlobalTwilioConfig; // Import the new VO
-import com.mycompany.contact_app.service.TelephonyService;
-import com.mycompany.contact_app.service.ConsentService; // Import new service
-import com.twilio.Twilio;
-import com.twilio.rest.api.v2010.account.Call;
-import com.twilio.type.PhoneNumber;
+import com.mycompany.contactmgr.repository.TenantSettingsRepository;
+import com.mycompany.contactmgr.model.ConsentPurpose;
+import com.mycompany.contactmgr.model.GlobalTwilioConfig; // Import the new VO
+import com.mycompany.contactmgr.service.TelephonyService;
+import com.mycompany.contactmgr.service.ConsentService; // Import new service
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -61,7 +55,7 @@ public class OutboundCallController {
             @RequestParam("employeePhone") String employeePhone,
             @RequestParam("contactPhone") String contactPhone) {
 
-        String tenantIdString = com.mycompany.contact_app.security.TenantContext.getCurrentTenant();
+        String tenantIdString = com.mycompany.contactmgr.security.TenantContext.getNonNullCurrentTenant();
         UUID principalUuid = UUID.fromString(tenantIdString);
 
         // --- CONSENT CHECK INTEGRATION POINT ---
@@ -127,7 +121,8 @@ public class OutboundCallController {
         final Pattern sidPattern = Pattern.compile(SID_PATTERN);
 
         if (globalConfig.accountSid() == null || !sidPattern.matcher(globalConfig.accountSid()).matches()) {
-            log.warn("Twilio account SID missing or invalid format; continuing startup in non-blocking mode for tests/dev.");
+            log.warn(
+                    "Twilio account SID missing or invalid format; continuing startup in non-blocking mode for tests/dev.");
             return;
         }
         if (globalConfig.authToken() == null) {

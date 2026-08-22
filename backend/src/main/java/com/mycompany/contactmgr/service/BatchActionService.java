@@ -1,8 +1,6 @@
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
-import com.mycompany.contact_app.entity.Contact;
-import com.mycompany.contact_app.repository.ContactRepository;
-import com.mycompany.contact_app.service.LifecycleManager;
+import com.mycompany.contactmgr.repository.ContactRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;

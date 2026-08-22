@@ -1,9 +1,8 @@
-package com.mycompany.contact_app.controller;
+package com.mycompany.contactmgr.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mycompany.contact_app.entity.TenantSettings;
-import com.mycompany.contact_app.repository.TenantSettingsRepository;
-import com.mycompany.contact_app.security.TenantContext;
+import com.mycompany.contactmgr.entity.TenantSettings;
+import com.mycompany.contactmgr.repository.TenantSettingsRepository;
+import com.mycompany.contactmgr.security.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

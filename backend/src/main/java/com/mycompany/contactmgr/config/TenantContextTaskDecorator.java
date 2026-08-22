@@ -1,6 +1,6 @@
-package com.mycompany.contact_app.config;
+package com.mycompany.contactmgr.config;
 
-import com.mycompany.contact_app.security.TenantContext;
+import com.mycompany.contactmgr.security.TenantContext;
 import org.springframework.core.task.TaskDecorator;
 import org.springframework.lang.NonNull;
 
@@ -9,7 +9,7 @@ public class TenantContextTaskDecorator implements TaskDecorator {
     @Override
     public Runnable decorate(@NonNull Runnable runnable) {
         // Capture tenant ID from the web-request thread
-        String tenantId = TenantContext.getCurrentTenant();
+        String tenantId = TenantContext.getNonNullCurrentTenant();
 
         return () -> {
             try {

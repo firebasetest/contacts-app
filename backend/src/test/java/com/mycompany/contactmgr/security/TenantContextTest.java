@@ -1,4 +1,4 @@
-package com.mycompany.contact_app.security;
+package com.mycompany.contactmgr.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;

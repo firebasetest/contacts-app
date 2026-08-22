@@ -1,4 +1,4 @@
-package com.mycompany.contact_app.entity;
+package com.mycompany.contactmgr.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -52,6 +52,12 @@ public class ImportJob extends BaseEntity {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "started_at")
+    private LocalDateTime startedAt;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
 
     public void setBusinessUnitId(UUID fromString) {
         this.buId = fromString;

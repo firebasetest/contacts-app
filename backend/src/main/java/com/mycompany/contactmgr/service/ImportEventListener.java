@@ -1,4 +1,4 @@
-package com.mycompany.contact_app.service;
+package com.mycompany.contactmgr.service;
 
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;

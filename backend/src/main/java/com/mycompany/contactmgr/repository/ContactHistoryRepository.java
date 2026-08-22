@@ -1,6 +1,6 @@
-package com.mycompany.contact_app.repository;
+package com.mycompany.contactmgr.repository;
 
-import com.mycompany.contact_app.entity.ContactHistory;
+import com.mycompany.contactmgr.entity.ContactHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
