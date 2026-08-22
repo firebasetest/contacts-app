@@ -2,6 +2,7 @@ package com.mycompany.contactmgr.repository;
 
 import com.mycompany.contactmgr.entity.BusinessUnit;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.UUID;
@@ -27,6 +28,14 @@ public interface BusinessUnitRepository extends JpaRepository<BusinessUnit, UUID
      * Finds a BusinessUnit by its unique external ID (X-Tenant-Id).
      */
     Optional<BusinessUnit> findByBusinessUnitId(String businessUnitId);
+
+    // Custom method to find units by name/slug, respecting pagination.
+    // Spring Data JPA handles the complex SQL Query Builder for us.
+    // 'Pageable' ensures the query uses OFFSET/LIMIT clauses.
+    java.util.Optional<BusinessUnit> findBySlugIgnoreCase(String slug);
+
+    // This method implements the complex search requirement
+    java.util.List<BusinessUnit> findByContainingIgnoreCase(String search, Pageable pageable);
 
     /**
      * Deletes a BusinessUnit by its unique external ID.

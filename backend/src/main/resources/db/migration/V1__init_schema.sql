@@ -22,11 +22,13 @@ DROP TABLE IF EXISTS business_units CASCADE;
 -- --------------------------------------------------------------
 CREATE TABLE business_units (
     id UUID PRIMARY KEY,
-    business_unit_id VARCHAR(100) NOT NULL UNIQUE, -- This MUST match X-Tenant-Id
+    slug VARCHAR(100) NOT NULL UNIQUE, -- This MUST match X-Tenant-Id
     name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
     status VARCHAR(50) NOT NULL, -- Stores the enum Status
     active BOOLEAN DEFAULT TRUE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE tenant_settings (
