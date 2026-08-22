@@ -13,6 +13,7 @@ import com.mycompany.contactmgr.model.BusinessUnitStatus;
 import com.mycompany.contactmgr.service.BusinessUnitService;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/business-units")
@@ -73,7 +74,7 @@ public class BusinessUnitController {
             @RequestParam BusinessUnitStatus newStatus) {
 
         // Use transactional logic: Change status and update the 'updatedAt' field.
-        BusinessUnitDto updatedUnit = businessUnitService.updateStatus(businessUnitId, newStatus);
+        BusinessUnitDto updatedUnit = businessUnitService.updateStatus(UUID.fromString(businessUnitId), newStatus);
         return ResponseEntity.ok(updatedUnit);
     }
 
